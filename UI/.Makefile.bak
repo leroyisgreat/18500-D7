@@ -1,0 +1,22 @@
+TARGET = gui
+
+CXX 	 = g++
+
+SRCDIR = src
+OBJDIR = obj
+
+_OBJ 	 = gui.o
+OBJ 	 = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
+
+all: $(OBJ)
+	$(CXX) src/gui.cpp -o bin/$(TARGET) `pkg-config gtkmm-3.0 --cflags --libs`
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	$(CXX) -c -o $@ $<
+
+
+.PHONY: clean
+
+clean:
+	rm -f bin/$(TARGET)
+	rm -f obj/*.o
