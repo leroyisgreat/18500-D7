@@ -21,8 +21,12 @@ Gui::Gui()
 
   // add viewfinder as Aspect Frame
   l1_grid.add(l2_viewfinder);
+  // let viewfinder panel grow vertically & horizontally with window
   l2_viewfinder.set_hexpand();
   l2_viewfinder.set_vexpand();
+  // add a stock photo to the viewfinder
+  // TODO
+
 
   // add left panel
   l1_grid.attach_next_to(
@@ -64,7 +68,7 @@ Gui::Gui()
   // passing a pointer to "button 2" instead.
   m_button2.signal_clicked().connect(sigc::bind<-1, Glib::ustring>(
               sigc::mem_fun(*this, &Gui::on_button_clicked), "button 2"));
-
+  
   l2_box_left.pack_start(m_button2);
 
   // Show the widgets.
