@@ -2,12 +2,7 @@
 #include <iostream>
 
 Gui::Gui()
-: l2_viewfinder("16x9", /* label */
-    Gtk::ALIGN_CENTER,  /* align x */
-    Gtk::ALIGN_CENTER,  /* align y */
-    1.77,               /* xsize/ysize (16x9) */
-    false               /* ignore child's aspect */),
-  m_button1("Button 1"),
+: m_button1("Button 1"),
   m_button2("Button 2")
 {
   // set title of new window.
@@ -25,7 +20,6 @@ Gui::Gui()
   l2_viewfinder.set_hexpand();
   l2_viewfinder.set_vexpand();
   // add a stock photo to the viewfinder
-  // TODO
 
 
   // add left panel
@@ -79,9 +73,7 @@ Gui::Gui()
   show_all_children();
 }
 
-Gui::~Gui()
-{
-}
+Gui::~Gui() {}
 
 // Our new improved signal handler.  The data passed to this method is
 // printed to stdout.
