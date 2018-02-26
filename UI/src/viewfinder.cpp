@@ -24,12 +24,6 @@ Viewfinder::Viewfinder() {
   } catch(const Gdk::PixbufError& ex) {
     std::cerr << "PixbufError: " << ex.what() << std::endl;
   }
-
-  /*
-  if (image) 
-    ap = image->get_width() /(double) image->get_height();
-		//set_size_request(image->get_width()/2, image->get_height()/2);
-    //*/
 }
 
 Viewfinder::~Viewfinder() {}
@@ -47,13 +41,40 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
   // Draw the image in the top right corner, fixed aspect ratio to fit the window
   double scale = std::min(frame_width /(double) img_width,
                           frame_height /(double) img_height);
+  int scaled_width = img_width*scale;
+  int scaled_height = img_height*scale;
   Glib::RefPtr<Gdk::Pixbuf> image_scaled = 
-        image->scale_simple(img_width*scale, 
-                            img_height*scale, 
+        image->scale_simple(scaled_width, 
+                            scaled_height, 
                             Gdk::INTERP_BILINEAR);
   Gdk::Cairo::set_source_pixbuf(cr, image_scaled, 0, 0);
-
   cr->paint();
+
+  // TODO un-magic-number this, also move to function?
+  cr->set_line_width(4);
+  cr->set_source_rgb(1.0, 1.0, 1.0);
+
+  cr->save();
+  cr->move_to(50,10);
+  cr->line_to(10,10);
+  cr->line_to(10,50);
+  cr->stroke();
+
+  cr->move_to(scaled_width - 50,10);
+  cr->line_to(scaled_width - 10,10);
+  cr->line_to(scaled_width - 10,50);
+  cr->stroke();
+
+  cr->move_to(50,scaled_height - 10);
+  cr->line_to(10,scaled_height - 10);
+  cr->line_to(10,scaled_height - 50);
+  cr->stroke();
+
+  cr->move_to(scaled_width - 50,scaled_height - 10);
+  cr->line_to(scaled_width - 10,scaled_height - 10);
+  cr->line_to(scaled_width - 10,scaled_height - 50);
+  cr->stroke();
+  cr->restore();
 
   return true;
 }
