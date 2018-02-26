@@ -7,6 +7,8 @@
  * @author  LeRoy Gary <lgary@andrew.cmu.edu>
  */
 
+#include "camera_state.h"
+#include "gui.h"
 #include "viewfinder.h"
 #include <cairomm/context.h>
 #include <gdkmm/general.h> // set_source_pixbuf()
@@ -76,5 +78,32 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
   cr->stroke();
   cr->restore();
 
+  //cr->save();
+
+  Glib::RefPtr<Pango::Layout> layout;
+  if (current_state == HDR) {
+    layout = create_pango_layout("HDR");
+  } else if (current_state == AF) {
+    layout = create_pango_layout("AF");
+  } else {
+    layout = create_pango_layout("...");
+	}
+
+  int text_width;
+  int text_height;
+
+  //get the text dimensions (it updates the variables -- by reference)
+  layout->get_pixel_size(text_width, text_height);
+
+  // Position the text in the middle
+  cr->move_to(20,20);
+
+  layout->show_in_cairo_context(cr);
+
+  //cr->restore();
   return true;
+}
+
+void Viewfinder::setCameraState(CameraState state) {
+  current_state = state;
 }

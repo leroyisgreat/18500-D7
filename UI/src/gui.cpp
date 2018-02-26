@@ -1,13 +1,18 @@
+#include "camera_state.h"
 #include "gui.h"
 #include <iostream>
 
 Gui::Gui()
-: l1_box(Gtk::ORIENTATION_VERTICAL, 4),
-  l2_box_top(Gtk::ORIENTATION_HORIZONTAL, 4),
-  l2_box_bottom(Gtk::ORIENTATION_HORIZONTAL, 4),
-  l3_box_left(Gtk::ORIENTATION_VERTICAL, 4),
-  m_button1("Button 1"),
-  m_button2("Button 2")
+: l1_box(       Gtk::ORIENTATION_VERTICAL,    4),
+  l2_box_top(   Gtk::ORIENTATION_HORIZONTAL,  4),
+  l2_box_bottom(Gtk::ORIENTATION_HORIZONTAL,  4),
+  l3_box_left(  Gtk::ORIENTATION_VERTICAL,    4),
+  mode_button_1("Plain"),
+  mode_button_2("HDR"),
+  mode_button_3("AF"),
+  op_button_1("Option 1"),
+  op_button_2("Option 2"),
+  op_button_3("Option 3")
 {
   // set title of new window.
   set_title("18-500 Team D7 GUI");
@@ -31,24 +36,29 @@ Gui::Gui()
 
   // Now when the button is clicked, we call the "on_button_clicked" function
   // with a pointer to "button 1" as it's argument
-  m_button1.signal_clicked().connect(sigc::bind<Glib::ustring>(
-              sigc::mem_fun(*this, &Gui::on_button_clicked), "button 1"));
+  mode_button_1.signal_clicked().connect(sigc::bind<CameraState>(
+              sigc::mem_fun(*this, &Gui::on_button_clicked), CameraState::NONE));
+  mode_button_2.signal_clicked().connect(sigc::bind<CameraState>(
+              sigc::mem_fun(*this, &Gui::on_button_clicked), CameraState::HDR));
+  mode_button_3.signal_clicked().connect(sigc::bind<CameraState>(
+              sigc::mem_fun(*this, &Gui::on_button_clicked), CameraState::AF));
 
-  // instead of gtk_container_add, we pack this button into the invisible
-  // box, which has been packed into the window.
-  // note that the pack_start default arguments are Gtk::EXPAND | Gtk::FILL, 0
-  l2_box_bottom.pack_start(m_button1);
-
-  // always remember this step, this tells GTK that our preparation
-  // for this button is complete, and it can be displayed now.
-  m_button1.show();
+  l2_box_bottom.pack_start(mode_button_1, false, false);
+  l2_box_bottom.pack_start(mode_button_2, false, false);
+  l2_box_bottom.pack_start(mode_button_3, false, false);
 
   // call the same signal handler with a different argument,
   // passing a pointer to "button 2" instead.
-  m_button2.signal_clicked().connect(sigc::bind<-1, Glib::ustring>(
-              sigc::mem_fun(*this, &Gui::on_button_clicked), "button 2"));
+  op_button_1.signal_clicked().connect(sigc::bind<-1, CameraState>(
+              sigc::mem_fun(*this, &Gui::on_button_clicked), CameraState::NONE));
+  op_button_2.signal_clicked().connect(sigc::bind<-1, CameraState>(
+              sigc::mem_fun(*this, &Gui::on_button_clicked), CameraState::NONE));
+  op_button_3.signal_clicked().connect(sigc::bind<-1, CameraState>(
+              sigc::mem_fun(*this, &Gui::on_button_clicked), CameraState::NONE));
   
-  l3_box_left.pack_start(m_button2);
+  l3_box_left.pack_start(op_button_1, false, false);
+  l3_box_left.pack_start(op_button_2, false, false);
+  l3_box_left.pack_start(op_button_3, false, false);
 
 
   show_all_children();
@@ -56,10 +66,10 @@ Gui::Gui()
 
 Gui::~Gui() {}
 
-// Our new improved signal handler.  The data passed to this method is
-// printed to stdout.
-void Gui::on_button_clicked(Glib::ustring data)
+void Gui::on_button_clicked(CameraState state)
 {
-  std::cout << "Hello World - " << data << " was pressed" << std::endl;
+  current_state = state;
+  l3_viewfinder.setCameraState(state);
+  std::cout << "State button - " << state << " was pressed" << std::endl;
 }
 

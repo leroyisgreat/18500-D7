@@ -9,7 +9,7 @@ INCDIR = include
 
 _OBJ   = main.o gui.o viewfinder.o
 OBJ    = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
-_INC   = gui.h viewfinder.h
+_INC   = gui.h viewfinder.h camera_state.h
 INC    = $(patsubst %,$(INCDIR)/%,$(_INC))
 
 all: $(OBJ)
