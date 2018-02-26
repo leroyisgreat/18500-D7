@@ -1,4 +1,4 @@
-TARGET = gui
+TARGET = gui.app
 
 CXX    = g++
 CFLAGS = -Wall -Iinclude `pkg-config gtkmm-3.0 --cflags --libs`
