@@ -7,9 +7,9 @@ SRCDIR = src
 OBJDIR = obj
 INCDIR = include
 
-_OBJ   = main.o helloworld.o
+_OBJ   = main.o gui.o
 OBJ    = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
-_INC   = helloworld.h
+_INC   = gui.h
 INC    = $(patsubst %,$(INCDIR)/%,$(_INC))
 
 all: $(OBJ)

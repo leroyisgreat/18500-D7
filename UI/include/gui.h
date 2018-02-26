@@ -1,9 +1,13 @@
-#ifndef GUI_H
+#ifndef GUI_H 
 #define GUI_H
 
 #include <gtkmm/box.h>
 #include <gtkmm/button.h>
 #include <gtkmm/window.h>
+#include <gtkmm/aspectframe.h>
+#include <gtkmm/drawingarea.h>
+#include <gtkmm/grid.h>
+#include <gtkmm/image.h>
 
 class Gui : public Gtk::Window
 {
@@ -18,7 +22,11 @@ protected:
   void on_button_clicked(Glib::ustring data);
 
   // Child widgets:
-  Gtk::Box m_box1;
+  Gtk::Grid         l1_grid;
+  Gtk::AspectFrame  l2_viewfinder;
+  Gtk::Box          l2_box_left;
+  Gtk::Box          l2_box_bottom;
+  Gtk::Image        l3_image; // placehodler image
   Gtk::Button m_button1, m_button2;
 };
 
