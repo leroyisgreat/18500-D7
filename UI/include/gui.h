@@ -20,13 +20,13 @@ protected:
   void on_button_clicked(Glib::ustring data);
 
   // Child widgets:
-  Gtk::Grid         l1_grid;
-  //Gtk::AspectFrame  l2_viewfinder;
-  Gtk::Box          l2_box_left;
+  Gtk::Box          l1_box;
+  Gtk::Box          l2_box_top;
   Gtk::Box          l2_box_bottom;
+  Gtk::Box          l3_box_left;
   Gtk::Button m_button1, m_button2;
 
-  Viewfinder        l2_viewfinder;
+  Viewfinder        l3_viewfinder;
 };
 
 #endif // GUI_H

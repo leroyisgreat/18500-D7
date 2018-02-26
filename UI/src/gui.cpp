@@ -2,7 +2,11 @@
 #include <iostream>
 
 Gui::Gui()
-: m_button1("Button 1"),
+: l1_box(Gtk::ORIENTATION_VERTICAL, 4),
+  l2_box_top(Gtk::ORIENTATION_HORIZONTAL, 4),
+  l2_box_bottom(Gtk::ORIENTATION_HORIZONTAL, 4),
+  l3_box_left(Gtk::ORIENTATION_VERTICAL, 4),
+  m_button1("Button 1"),
   m_button2("Button 2")
 {
   // set title of new window.
@@ -11,38 +15,19 @@ Gui::Gui()
   set_border_width(10);
   set_default_size(800,600);
 
-  // add highest level container
-  add(l1_grid);
+  // add highest level container (vertical box)
+  add(l1_box);
 
-  // add viewfinder as Aspect Frame
-  l1_grid.add(l2_viewfinder);
-  // let viewfinder panel grow vertically & horizontally with window
-  l2_viewfinder.set_hexpand();
-  l2_viewfinder.set_vexpand();
-  // add a stock photo to the viewfinder
+  // add second level containers (two horizontal boxes)
+  l1_box.pack_start(l2_box_top, true, true);
+  l1_box.pack_start(l2_box_bottom, false, false);
 
+  // add left panel to top l2 box
+  l2_box_top.pack_start(l3_box_left, false, false);
 
-  // add left panel
-  l1_grid.attach_next_to(
-      l2_box_left,    // child to attach
-      l2_viewfinder,  // the child already existing to place relatively
-      Gtk::POS_LEFT,  // how the child will relate to the existing
-      2,              // width
-      8               // height
-      );   
-  // let left panel grow vertically with window
-  l2_box_left.set_vexpand();
+  // add viewfinder to top l2 box
+  l2_box_top.pack_start(l3_viewfinder, true, true);
 
-  // add bottom panel
-  l1_grid.attach_next_to(
-      l2_box_bottom,  // child to attach
-      l2_box_left,  // the child already existing to place relatively
-      Gtk::POS_BOTTOM,// how the child will relate to the existing
-      8,              // width
-      4               // height
-      );   
-  // let bottom panel grow horizontally with window
-  l2_box_bottom.set_hexpand();
 
   // Now when the button is clicked, we call the "on_button_clicked" function
   // with a pointer to "button 1" as it's argument
@@ -63,12 +48,8 @@ Gui::Gui()
   m_button2.signal_clicked().connect(sigc::bind<-1, Glib::ustring>(
               sigc::mem_fun(*this, &Gui::on_button_clicked), "button 2"));
   
-  l2_box_left.pack_start(m_button2);
+  l3_box_left.pack_start(m_button2);
 
-  // Show the widgets.
-  // They will not really be shown until this Window is shown.
-  //m_button2.show();
-  //m_box1.show();
 
   show_all_children();
 }
