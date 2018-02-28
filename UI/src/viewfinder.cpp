@@ -95,7 +95,7 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
   //get the text dimensions (it updates the variables -- by reference)
   layout->get_pixel_size(text_width, text_height);
 
-  // Position the text in the middle
+  // Position the text in the top-left
   cr->move_to(20,20);
 
   layout->show_in_cairo_context(cr);
