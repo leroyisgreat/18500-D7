@@ -1,70 +1,73 @@
 #include "gui.h"
 #include <gtkmm/application.h>
 
-
-#include <gstreamermm.h>
+#include <gstreamermm-1.0/gstreamermm.h>
 #include <glibmm/main.h>
 #include <glibmm/convert.h>
 #include <iostream>
 #include <stdlib.h>
 #include <gstreamermm/playbin.h>
 
-int main (int argc, char *argv[])
-{
+int main (int argc, char *argv[]) {
   auto app = Gtk::Application::create(argc, argv, "org.gtkmm.example");
 
+  /////////////////
+  // Begin gstreamer test
+  /////////////////
+
+  GstElement *pipeline, *source, *sink;
+  GstBus *bus;
+  //GstMessage *msg;
+  GMainLoop *loop;
+  GstStateChangeReturn ret;
+
   Gst::init(argc, argv);
-  if(argc < 2) {
-    std::cout << "Usage: " << argv[0] << " <media file or uri>" << std::endl;
-        return -1;
-  }
-// Create a playbin element.
-#ifndef GSTREAMERMM_DISABLE_DEPRECATED
-  Glib::RefPtr<Gst::PlayBin> playbin = Gst::PlayBin::create();
-#else
-  Glib::RefPtr<Gst::Element> playbin = Gst::ElementFactory::create_element("playbin");
-#endif
-  
-  if(!playbin)
-  {
-    std::cerr << "The playbin2 element could not be created." << std::endl;
-    return EXIT_FAILURE;
+  pipeline = gst_pipeline_new ("test-pipeline");
+  source = gst_element_factory_make ("autovideosrc", "source");
+  sink = gst_element_factory_make ("autovideosink", "sink");
+
+
+  if (!pipeline || !source || !sink) {
+    g_printerr ("Not all elements could be created.\n");
+    return -1;
   }
 
-  // Take the commandline argument and ensure that it is a uri:
-  Glib::ustring uri;
+  g_object_set(G_OBJECT (source), "location", argv[1], NULL);
 
-  if(gst_uri_is_valid(argv[1]))
-    uri = argv[1];
-  else
-    uri = Glib::filename_to_uri(argv[1]);
+  gst_bin_add_many (GST_BIN (pipeline), source, sink, NULL);
 
-  // Set the playbyin2's uri property.
-  playbin->set_property("uri", uri);
+	if (gst_element_link (source, sink) != TRUE) {
+	  g_printerr ("Elements could not be linked.\n");
+	  gst_object_unref (pipeline);
+	  return -1;
+	}
 
-  // Create the main loop.
-  mainloop = Glib::MainLoop::create();
+	ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
+	if (ret == GST_STATE_CHANGE_FAILURE) {
+    std::cout << "Unable to set the pipeline to the playing state." << std::endl;
+		gst_object_unref (pipeline);
+		return -1;
+	}
 
-  // Get the bus from the playbin, and add a bus watch to the default main
-  // context with the default priority:
-  Glib::RefPtr<Gst::Bus> bus = playbin->get_bus();
-  bus->add_watch(sigc::ptr_fun(&on_bus_message));
+	bus = gst_element_get_bus (pipeline);
 
-  // Now set the playbin to the PLAYING state and start the main loop:
-  std::cout << "Setting to PLAYING." << std::endl;
-  playbin->set_state(Gst::STATE_PLAYING);
-  std::cout << "Running." << std::endl;
-  mainloop->run();
+	loop = g_main_loop_new(NULL, FALSE);
+	g_main_loop_run(loop);
 
-  // Clean up nicely:
-  std::cout << "Returned. Setting state to NULL." << std::endl;
-  playbin->set_state(Gst::STATE_NULL);
-
-
-//////////
+  /////////////////
+  // End gstreamer test
+  /////////////////
 
   Gui gui;
 
   //Shows the window and returns when it is closed.
-  return app->run(gui);
+  app->run(gui);
+
+  g_main_loop_unref(loop);
+  gst_object_unref (bus);
+  gst_element_set_state (pipeline, GST_STATE_NULL);
+  gst_object_unref (pipeline);
+
+  return 1;
 }
+
