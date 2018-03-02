@@ -52,7 +52,7 @@ int main (int argc, char *argv[]) {
 	bus = gst_element_get_bus (pipeline);
 
 	loop = g_main_loop_new(NULL, FALSE);
-	g_main_loop_run(loop);
+	//g_main_loop_run(loop);
 
   /////////////////
   // End gstreamer test
