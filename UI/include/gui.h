@@ -12,24 +12,19 @@
 
 #include "camera_state.h"
 #include "viewfinder.h"
-#include <gtkmm/aspectframe.h>
-#include <gtkmm/box.h>
-#include <gtkmm/button.h>
-#include <gtkmm/grid.h>
-#include <gtkmm/window.h>
+#include <gtkmm.h>
+#include <gstreamermm.h>
 
 class Gui : public Gtk::Window {
 public:
-  Gui();
+  Gui(const Glib::RefPtr<Gst::PlayBin>& playbin);
   virtual ~Gui();
 
-  Viewfinder        l3_viewfinder;
-  GdkWindow *get_viewfinder_window();
 protected:
-
   // Signal handlers:
-  // Our new improved on_button_clicked(). (see below)
   void on_button_clicked(CameraState state);
+  void on_bus_message_sync(const Glib::RefPtr<Gst::Message>& message);
+  void on_viewfinder_realize();
 
   // Child widgets:
   Gtk::Box          l1_box;
@@ -38,12 +33,16 @@ protected:
   Gtk::Box          l3_box_left;
   Gtk::Button       mode_button_1, mode_button_2, mode_button_3;
   Gtk::Button       op_button_1, op_button_2, op_button_3;
+  Viewfinder        l3_viewfinder;
 
+  // gst playbin
+  Glib::RefPtr<Gst::Element> m_playbin;
 
 	// camera state information:
 	CameraState current_state;
-	bool HDR_enable;
-	bool AF_enable;
+
+  // widget state information
+  gulong viewfinder_window_xid;
 };
 
 #endif // GUI_H

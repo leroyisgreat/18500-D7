@@ -1,8 +1,11 @@
+// thanks https://git.gnome.org//browse/gstreamermm/tree/examples/media_player_gtkmm/player_window.cc
+
 #include "camera_state.h"
 #include "gui.h"
 #include <iostream>
+#include <gdk/gdkx.h>
 
-Gui::Gui()
+Gui::Gui(const Glib::RefPtr<Gst::PlayBin>& playbin)
 : l1_box(       Gtk::ORIENTATION_VERTICAL,    4),
   l2_box_top(   Gtk::ORIENTATION_HORIZONTAL,  4),
   l2_box_bottom(Gtk::ORIENTATION_HORIZONTAL,  4),
@@ -14,6 +17,11 @@ Gui::Gui()
   op_button_2("Option 2"),
   op_button_3("Option 3")
 {
+  /*
+   * begin setting up the GUI elements
+   * TODO: move this to a separate function
+   */
+
   // set title of new window.
   set_title("18-500 Team D7 GUI");
   // set border width of the window.
@@ -32,7 +40,6 @@ Gui::Gui()
 
   // add viewfinder to top l2 box
   l2_box_top.pack_start(l3_viewfinder, true, true);
-
 
   // Now when the button is clicked, we call the "on_button_clicked" function
   // with a pointer to "button 1" as it's argument
@@ -60,11 +67,56 @@ Gui::Gui()
   l3_box_left.pack_start(op_button_2, false, false);
   l3_box_left.pack_start(op_button_3, false, false);
 
+  l3_viewfinder.signal_realize().connect(sigc::mem_fun(*this,
+              &Gui::on_viewfinder_realize));
+
+  /*
+   * end setting up GUI elements
+   * begin setting up Gstreamer elements
+   * TODO: move this to a separate function
+   */
+
+  m_playbin = playbin;
+  Glib::RefPtr<Gst::Bus> bus = m_playbin->get_bus();
+
+
+  // Enable synchronous message emission to set up video (if any) at the
+  // exact appropriate time
+  bus->enable_sync_message_emission();
+
+  // Connect to bus's synchronous message signal for overlaying
+  bus->signal_sync_message().connect(
+              sigc::mem_fun(*this, &Gui::on_bus_message_sync));
+
+  /*
+   * end setting up Gstreamer elements
+   */
 
   show_all_children();
 }
 
 Gui::~Gui() {}
+
+static Glib::RefPtr<Gst::VideoOverlay> find_overlay(Glib::RefPtr<Gst::Element> element) {
+  auto overlay = Glib::RefPtr<Gst::VideoOverlay>::cast_dynamic(element);
+
+  if (overlay)
+    return overlay;
+
+  auto bin = Glib::RefPtr<Gst::Bin>::cast_dynamic(element);
+
+  if (!bin)
+    return overlay;
+
+  for (auto e : bin->get_children())
+  {
+    overlay = find_overlay(e);
+    if (overlay)
+      break;
+  }
+
+  return overlay;
+}
 
 void Gui::on_button_clicked(CameraState state) {
   current_state = state;
@@ -74,6 +126,26 @@ void Gui::on_button_clicked(CameraState state) {
   std::cout << "State button - " << state << " was pressed" << std::endl;
 }
 
-GdkWindow *Gui::get_viewfinder_window() {
-  return l3_viewfinder.get_window()->gobj();
+void Gui::on_viewfinder_realize() {
+  viewfinder_window_xid = GDK_WINDOW_XID(l3_viewfinder.get_window()->gobj());
 }
+
+void Gui::on_bus_message_sync(const Glib::RefPtr<Gst::Message>& message) {
+  // ignore any message that isn't saying we are able to set overlays
+  if (!gst_is_video_overlay_prepare_window_handle_message (message->gobj()))
+   return;
+
+  // set the overlay if the viewfinder window has been realized and the overlay
+  // is ready
+  if (viewfinder_window_xid != 0) {
+    Glib::RefPtr<Gst::VideoOverlay> videooverlay =
+        find_overlay(Glib::RefPtr<Gst::Element>::cast_dynamic(message->get_source()));
+
+    if (videooverlay) {
+      videooverlay->set_window_handle(viewfinder_window_xid);
+    }
+  } else {
+    std::cerr << "Should have obtained video_window_handle by now!" << std::endl;
+  }
+}
+

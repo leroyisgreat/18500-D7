@@ -19,13 +19,13 @@
 Viewfinder::Viewfinder() {
   // TODO: For now, we're loading a static image to the PixBuf for testing 
   //        purposes. Later we'll stream from a camera device on system.
-  try {
-    image = Gdk::Pixbuf::create_from_file("resources/bg.jpg");
-  } catch(const Gio::ResourceError& ex) {
-    std::cerr << "ResourceError: " << ex.what() << std::endl;
-  } catch(const Gdk::PixbufError& ex) {
-    std::cerr << "PixbufError: " << ex.what() << std::endl;
-  }
+  //try {
+  //  image = Gdk::Pixbuf::create_from_file("resources/bg.jpg");
+  //} catch(const Gio::ResourceError& ex) {
+  //  std::cerr << "ResourceError: " << ex.what() << std::endl;
+  //} catch(const Gdk::PixbufError& ex) {
+  //  std::cerr << "PixbufError: " << ex.what() << std::endl;
+  //}
 }
 
 Viewfinder::~Viewfinder() {}

@@ -49,3 +49,9 @@ It turns out that in order to do the overlay, I had to connect the overlay
 action to whenever the Viewfinder element was realized, but in order to do that
 I needed the Gui to be made. There didn't seem to be a way to build the Gui
 without actually running it.
+
+`https://developer.gnome.org/gstreamermm/1.0/` and
+`https://git.gnome.org/browse/gstreamermm/tree/examples/media_player_gtkmm` have
+been infinitely helpful resources for figuring out exactly what types the C++
+versions of Gst Elements, GObjects, and the like were, and how this project was
+going to fit together.
