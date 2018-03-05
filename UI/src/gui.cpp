@@ -38,8 +38,8 @@ Gui::Gui(const Glib::RefPtr<Gst::PlayBin>& playbin)
   // add left panel to top l2 box
   l2_box_top.pack_start(l3_box_left, false, false);
 
-  // add viewfinder to top l2 box
-  l2_box_top.pack_start(l3_viewfinder, true, true);
+
+  l2_box_top.pack_start(sink, true, true);
 
   // Now when the button is clicked, we call the "on_button_clicked" function
   // with a pointer to "button 1" as it's argument
@@ -67,7 +67,7 @@ Gui::Gui(const Glib::RefPtr<Gst::PlayBin>& playbin)
   l3_box_left.pack_start(op_button_2, false, false);
   l3_box_left.pack_start(op_button_3, false, false);
 
-  l3_viewfinder.signal_realize().connect(sigc::mem_fun(*this,
+  sink.signal_realize().connect(sigc::mem_fun(*this,
               &Gui::on_viewfinder_realize));
 
   /*
@@ -120,14 +120,14 @@ static Glib::RefPtr<Gst::VideoOverlay> find_overlay(Glib::RefPtr<Gst::Element> e
 
 void Gui::on_button_clicked(CameraState state) {
   current_state = state;
-  l3_viewfinder.setCameraState(state);
+  //l3_viewfinder.setCameraState(state);
   // viewfinder must be refreshed
-  l3_viewfinder.queue_draw();
+  //l3_viewfinder.queue_draw();
   std::cout << "State button - " << state << " was pressed" << std::endl;
 }
 
 void Gui::on_viewfinder_realize() {
-  viewfinder_window_xid = GDK_WINDOW_XID(l3_viewfinder.get_window()->gobj());
+  viewfinder_window_xid = GDK_WINDOW_XID(sink.get_window()->gobj());
 }
 
 void Gui::on_bus_message_sync(const Glib::RefPtr<Gst::Message>& message) {

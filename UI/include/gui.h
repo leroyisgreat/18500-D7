@@ -11,7 +11,6 @@
 #define GUI_H
 
 #include "camera_state.h"
-#include "viewfinder.h"
 #include <gtkmm.h>
 #include <gstreamermm.h>
 
@@ -33,7 +32,7 @@ protected:
   Gtk::Box          l3_box_left;
   Gtk::Button       mode_button_1, mode_button_2, mode_button_3;
   Gtk::Button       op_button_1, op_button_2, op_button_3;
-  Viewfinder        l3_viewfinder;
+  Gtk::DrawingArea  sink;
 
   // gst playbin
   Glib::RefPtr<Gst::Element> m_playbin;
