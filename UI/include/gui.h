@@ -23,6 +23,8 @@ public:
   Gui();
   virtual ~Gui();
 
+  Viewfinder        l3_viewfinder;
+  GdkWindow *get_viewfinder_window();
 protected:
 
   // Signal handlers:
@@ -37,7 +39,6 @@ protected:
   Gtk::Button       mode_button_1, mode_button_2, mode_button_3;
   Gtk::Button       op_button_1, op_button_2, op_button_3;
 
-  Viewfinder        l3_viewfinder;
 
 	// camera state information:
 	CameraState current_state;

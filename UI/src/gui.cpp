@@ -66,8 +66,7 @@ Gui::Gui()
 
 Gui::~Gui() {}
 
-void Gui::on_button_clicked(CameraState state)
-{
+void Gui::on_button_clicked(CameraState state) {
   current_state = state;
   l3_viewfinder.setCameraState(state);
   // viewfinder must be refreshed
@@ -75,3 +74,6 @@ void Gui::on_button_clicked(CameraState state)
   std::cout << "State button - " << state << " was pressed" << std::endl;
 }
 
+GdkWindow *Gui::get_viewfinder_window() {
+  return l3_viewfinder.get_window()->gobj();
+}
