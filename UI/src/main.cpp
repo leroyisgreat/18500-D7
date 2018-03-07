@@ -24,7 +24,7 @@ int main (int argc, char *argv[]) {
   // autovideosrc could also work
   // v4l2src has a device property that by default is /dev/video0
   playbin->property_uri() = (Glib::ustring) "v4l2:///dev/video0";
-  playbin->property_video_sink() = Gst::XvImageSink::create();
+  //playbin->property_video_sink() = Gst::XvImageSink::create();
 
   // begin playing the video
   Gst::StateChangeReturn ret = playbin->set_state(Gst::STATE_PLAYING);

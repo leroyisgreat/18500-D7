@@ -39,8 +39,6 @@ Gui::Gui(const Glib::RefPtr<Gst::PlayBin>& playbin)
   l2_box_top.pack_start(l3_box_left, false, false);
 
 
-  l2_box_top.pack_start(sink, true, true);
-
   // Now when the button is clicked, we call the "on_button_clicked" function
   // with a pointer to "button 1" as it's argument
   mode_button_1.signal_clicked().connect(sigc::bind<CameraState>(
@@ -67,8 +65,8 @@ Gui::Gui(const Glib::RefPtr<Gst::PlayBin>& playbin)
   l3_box_left.pack_start(op_button_2, false, false);
   l3_box_left.pack_start(op_button_3, false, false);
 
-  sink.signal_realize().connect(sigc::mem_fun(*this,
-              &Gui::on_viewfinder_realize));
+  //sink.signal_realize().connect(sigc::mem_fun(*this,
+  //            &Gui::on_viewfinder_realize));
 
   /*
    * end setting up GUI elements
@@ -79,7 +77,17 @@ Gui::Gui(const Glib::RefPtr<Gst::PlayBin>& playbin)
   m_playbin = playbin;
   Glib::RefPtr<Gst::Bus> bus = m_playbin->get_bus();
 
+  //playbin->property_video_sink() = Gst::GtkSink::create();
+  GstElement *gtk_sink = gst_element_factory_make ("gtksink", NULL);
+  GtkWidget sink;
+  g_object_get (gtk_sink, "widget", &sink, NULL);
 
+  playbin->property_video_sink() = Glib::wrap(gtk_sink);
+  //m_playbin->set_property("video-sink", Gst::ElementFactory::create_element("gtksink"));
+
+
+  Gtk::Widget video = Glib::wrap(sink);
+  l2_box_top.pack_start(video, true, true);
   // Enable synchronous message emission to set up video (if any) at the
   // exact appropriate time
   bus->enable_sync_message_emission();
@@ -126,9 +134,9 @@ void Gui::on_button_clicked(CameraState state) {
   std::cout << "State button - " << state << " was pressed" << std::endl;
 }
 
-void Gui::on_viewfinder_realize() {
-  viewfinder_window_xid = GDK_WINDOW_XID(sink.get_window()->gobj());
-}
+//void Gui::on_viewfinder_realize() {
+//  viewfinder_window_xid = GDK_WINDOW_XID(sink.get_window()->gobj());
+//}
 
 void Gui::on_bus_message_sync(const Glib::RefPtr<Gst::Message>& message) {
   // ignore any message that isn't saying we are able to set overlays
