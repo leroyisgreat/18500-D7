@@ -84,9 +84,9 @@ Gui::~Gui() {}
 
 void Gui::on_button_clicked(CameraState state) {
   current_state = state;
-  //l3_viewfinder.setCameraState(state);
+  viewfinder.setCameraState(state);
   // viewfinder must be refreshed
-  //l3_viewfinder.queue_draw();
+  viewfinder.queue_draw();
   std::cout << "State button - " << state << " was pressed" << std::endl;
 }
 
