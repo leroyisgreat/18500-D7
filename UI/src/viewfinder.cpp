@@ -16,21 +16,47 @@
 #include <glibmm/fileutils.h>
 #include <iostream>
 
-Viewfinder::Viewfinder() {
-  // TODO: For now, we're loading a static image to the PixBuf for testing 
-  //        purposes. Later we'll stream from a camera device on system.
-  //try {
-  //  image = Gdk::Pixbuf::create_from_file("resources/bg.jpg");
-  //} catch(const Gio::ResourceError& ex) {
-  //  std::cerr << "ResourceError: " << ex.what() << std::endl;
-  //} catch(const Gdk::PixbufError& ex) {
-  //  std::cerr << "PixbufError: " << ex.what() << std::endl;
-  //}
+Viewfinder::Viewfinder() : cv_opened(false) {
+    cv_cap.open(0);
+   
+    if (cv_cap.isOpened() == true) {
+        cv_opened = true;
+        Glib::signal_timeout().connect(sigc::mem_fun(*this, &Viewfinder::on_timeout), 50);
+    }
 }
 
 Viewfinder::~Viewfinder() {}
 
+bool Viewfinder::on_timeout()
+{
+    Glib::RefPtr<Gdk::Window> win = get_window();
+    if (win)
+    {
+        Gdk::Rectangle r(0, 0, get_allocation().get_width(), get_allocation().get_height());
+        win->invalidate_rect(r, false);
+    }
+    return true;
+}
+
 bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
+
+	if (!cv_opened) return false;
+ 
+	cv::Mat cv_frame, cv_frame1;
+
+	cv_cap.read(cv_frame);
+ 
+	if (cv_frame.empty()) return false;
+ 
+	cv::cvtColor (cv_frame, cv_frame1, CV_BGR2RGB);
+		 
+	Gdk::Cairo::set_source_pixbuf (cr, Gdk::Pixbuf::create_from_data(cv_frame1.data, Gdk::COLORSPACE_RGB, false, 8, cv_frame1.cols, cv_frame1.rows, cv_frame1.step));
+ 
+	cr->paint();
+		 
+	return true;
+
+	/*
   if (!image)
     return false;
 
@@ -102,6 +128,7 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 
   //cr->restore();
   return true;
+*/
 }
 
 void Viewfinder::setCameraState(CameraState state) {

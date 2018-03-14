@@ -12,6 +12,7 @@
 
 #include "camera_state.h"
 #include <gtkmm/drawingarea.h>
+#include <opencv2/opencv.hpp>
 
 class Viewfinder : public Gtk::DrawingArea {
 public:
@@ -20,8 +21,10 @@ public:
   void setCameraState(CameraState state);
 
 protected:
-	//Override default signal handler:
-  bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr) override;
+  cv::VideoCapture cv_cap;
+  bool cv_opened;
+  virtual bool on_draw (const Cairo::RefPtr<Cairo::Context> &cr);
+  bool on_timeout ();
 
   CameraState current_state;
 };

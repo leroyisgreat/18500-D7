@@ -1,15 +1,15 @@
 TARGET = gui.app
 
 CXX    = g++
-CFLAGS = -Wall -Iinclude `pkg-config gtkmm-3.0 --cflags --libs gstreamermm-1.0`
+CFLAGS = -Wall -Iinclude `pkg-config gtkmm-3.0 --cflags --libs gstreamermm-1.0 opencv`
 
 SRCDIR = src
 OBJDIR = obj
 INCDIR = include
 
-_OBJ   = main.o gui.o 
+_OBJ   = main.o gui.o viewfinder.o
 OBJ    = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
-_INC   = gui.h camera_state.h
+_INC   = gui.h camera_state.h viewfinder.h
 INC    = $(patsubst %,$(INCDIR)/%,$(_INC))
 
 all: $(OBJ)
