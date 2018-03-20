@@ -12,7 +12,6 @@
 
 #include "camera_state.h"
 #include <gtkmm.h>
-#include <gstreamermm.h>
 #include "viewfinder.h"
 
 class Gui : public Gtk::Window {
@@ -23,8 +22,6 @@ public:
 protected:
   // Signal handlers:
   void on_button_clicked(CameraState state);
-  void on_bus_message_sync(const Glib::RefPtr<Gst::Message>& message);
-  //void on_viewfinder_realize();
 
   // Child widgets:
   Gtk::Box          l1_box;
