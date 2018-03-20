@@ -2,7 +2,8 @@ TARGET = gui.app
 MKDIR_P = mkdir -p
 
 CXX    = g++
-CFLAGS = -Wall -Iinclude `pkg-config gtkmm-3.0 --cflags --libs opencv`
+CFLAGS = -c -Wall -Iinclude `pkg-config --cflags gtkmm-3.0 opencv`
+LFLAGS = `pkg-config --libs gtkmm-3.0 opencv`
 
 SRCDIR = src
 OBJDIR = obj
@@ -20,13 +21,13 @@ $(shell mkdir -p $(DIRS))
 all: $(OBJ)
 	$(info Linking $(TARGET))
 	$(info)
-	$(CXX) -o $(EXEDIR)/$(TARGET) $^ $(CFLAGS) 
+	$(CXX) -o $(EXEDIR)/$(TARGET) $^ $(LFLAGS)
 	$(info Linking finished.)
 
 $(OBJ): $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INC)
 	$(info Compiling $@...)
 	$(info)
-	$(CXX) -c -o $@ $< $(CFLAGS) 
+	$(CXX) -o $@ $< $(CFLAGS) 
 	$(info Compiling finished.)
 
 .PHONY: clean
