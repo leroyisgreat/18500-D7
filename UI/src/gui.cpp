@@ -17,11 +17,6 @@ Gui::Gui()
   op_button_2("Option 2"),
   op_button_3("Option 3")
 {
-  /*
-   * begin setting up the GUI elements
-   * TODO: move this to a separate function
-   */
-
   // set title of new window.
   set_title("18-500 Team D7 GUI");
   // set border width of the window.
@@ -64,18 +59,8 @@ Gui::Gui()
   l3_box_left.pack_start(op_button_2, false, false);
   l3_box_left.pack_start(op_button_3, false, false);
 
-  /*
-   * end setting up GUI elements
-   * begin setting up Gstreamer elements
-   * TODO: move this to a separate function
-   */
-
   l2_box_top.pack_start(frame, true, true);
   frame.add(viewfinder);
-
-  /*
-   * end setting up Gstreamer elements
-   */
 
   show_all_children();
 }
