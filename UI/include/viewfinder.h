@@ -27,6 +27,10 @@ protected:
   bool on_timeout ();
 
   CameraState current_state;
+
+private:
+  void draw_hud(const Cairo::RefPtr<Cairo::Context> &cr, 
+                int scaled_width, int scaled_height);
 };
 
 #endif // VIEWFINDER_H

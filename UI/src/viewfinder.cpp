@@ -41,6 +41,54 @@ bool Viewfinder::on_timeout() {
   return true;
 }
 
+void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
+                          int scaled_width, int scaled_height) {
+  cr->set_line_width(4);
+  cr->set_source_rgb(1.0, 1.0, 1.0);
+
+  cr->save();
+  cr->move_to(50,10);
+  cr->line_to(10,10);
+  cr->line_to(10,50);
+  cr->stroke();
+
+  cr->move_to(scaled_width - 50,10);
+  cr->line_to(scaled_width - 10,10);
+  cr->line_to(scaled_width - 10,50);
+  cr->stroke();
+
+  cr->move_to(50,scaled_height - 10);
+  cr->line_to(10,scaled_height - 10);
+  cr->line_to(10,scaled_height - 50);
+  cr->stroke();
+
+  cr->move_to(scaled_width - 50,scaled_height - 10);
+  cr->line_to(scaled_width - 10,scaled_height - 10);
+  cr->line_to(scaled_width - 10,scaled_height - 50);
+  cr->stroke();
+  cr->restore();
+
+  Glib::RefPtr<Pango::Layout> layout;
+  if (current_state == HDR) {
+    layout = create_pango_layout("HDR");
+  } else if (current_state == AF) {
+    layout = create_pango_layout("AF");
+  } else {
+    layout = create_pango_layout("...");
+	}
+
+  int text_width;
+  int text_height;
+
+  //get the text dimensions (it updates the variables -- by reference)
+  layout->get_pixel_size(text_width, text_height);
+
+  // Position the text in the top-left
+  cr->move_to(20,20);
+
+  layout->show_in_cairo_context(cr);
+}
+
 bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	if (!cv_opened) return false;
  
@@ -70,6 +118,7 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
   const int frame_height = allocation.get_height();
   const int img_width = buf->get_width();
   const int img_height = buf->get_height();
+
   // Draw the image in the top right corner, fixed aspect ratio to fit the window
   double scale = std::min(frame_width /(double) img_width,
                           frame_height /(double) img_height);
@@ -77,60 +126,13 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
   int scaled_height = img_height*scale;
   Glib::RefPtr<Gdk::Pixbuf> buf_scaled = 
         buf->scale_simple(scaled_width, 
-                            scaled_height, 
-                            Gdk::INTERP_BILINEAR);
+                          scaled_height, 
+                          Gdk::INTERP_BILINEAR);
   Gdk::Cairo::set_source_pixbuf(cr, buf_scaled, 0, 0);
   cr->paint(); 
 		 
-  // TODO un-magic-number this, also move to function?
-  cr->set_line_width(4);
-  cr->set_source_rgb(1.0, 1.0, 1.0);
+  Viewfinder::draw_hud(cr, scaled_width, scaled_height);
 
-  cr->save();
-  cr->move_to(50,10);
-  cr->line_to(10,10);
-  cr->line_to(10,50);
-  cr->stroke();
-
-  cr->move_to(scaled_width - 50,10);
-  cr->line_to(scaled_width - 10,10);
-  cr->line_to(scaled_width - 10,50);
-  cr->stroke();
-
-  cr->move_to(50,scaled_height - 10);
-  cr->line_to(10,scaled_height - 10);
-  cr->line_to(10,scaled_height - 50);
-  cr->stroke();
-
-  cr->move_to(scaled_width - 50,scaled_height - 10);
-  cr->line_to(scaled_width - 10,scaled_height - 10);
-  cr->line_to(scaled_width - 10,scaled_height - 50);
-  cr->stroke();
-  cr->restore();
-
-  //cr->save();
-
-  Glib::RefPtr<Pango::Layout> layout;
-  if (current_state == HDR) {
-    layout = create_pango_layout("HDR");
-  } else if (current_state == AF) {
-    layout = create_pango_layout("AF");
-  } else {
-    layout = create_pango_layout("...");
-	}
-
-  int text_width;
-  int text_height;
-
-  //get the text dimensions (it updates the variables -- by reference)
-  layout->get_pixel_size(text_width, text_height);
-
-  // Position the text in the top-left
-  cr->move_to(20,20);
-
-  layout->show_in_cairo_context(cr);
-
-  //cr->restore();
   return true;
 }
 
