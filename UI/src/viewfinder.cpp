@@ -175,3 +175,11 @@ void Viewfinder::get_capture() {
 void Viewfinder::save(const char *filename) {
   cv::imwrite(filename, captures.back());
 }
+
+void Viewfinder::hdr() {
+	if (!camera.isOpened()) return;
+ 
+	cv::Mat frame;
+  // ...
+  captures.push_back(frame.clone());
+}

@@ -21,6 +21,7 @@ public:
 	virtual ~Viewfinder();
   void set_camera_state(CameraState state);
   void get_capture();
+  void hdr();
   void save(const char *filename);
   raspicam::RaspiCam_Cv camera;
   //cv::VideoCapture camera;
