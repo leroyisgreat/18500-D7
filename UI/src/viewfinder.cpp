@@ -14,12 +14,11 @@
 #include <gdkmm/general.h> // set_source_pixbuf()
 #include <giomm/resource.h>
 #include <glibmm/fileutils.h>
-#include <iostream>
 
 Viewfinder::Viewfinder() {
   // open camera
   std::cout << "Opening Raspbery Pi Camera..." << std::endl;
-  if (false){//!camera.open()) {
+  if (!camera.open()) {
     // Camera didn't successfully open.
     std::cerr << "Opening Raspberry Pi Camera failed." << std::endl; 
     std::cerr << "Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?" << std::endl;
@@ -33,6 +32,7 @@ Viewfinder::Viewfinder() {
     // this is the Gtk(TM) way to redraw a window on command
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &Viewfinder::on_timeout), 50);
   }
+  current_state = CameraState::CONTINUOUS;
   std::cout << "Setup finished." << std::endl;
 }
 
@@ -117,7 +117,7 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
   if (current_state == CONTINUOUS) {
     camera.grab();
     camera.retrieve(cv_frame);
-  } else {
+  } else if (!captures.empty()) {
     cv_frame = captures.back();
   }
  

@@ -23,6 +23,7 @@ public:
   void get_capture();
   void save(const char *filename);
   raspicam::RaspiCam_Cv camera;
+  //cv::VideoCapture camera;
 
 protected:
   virtual bool on_draw (const Cairo::RefPtr<Cairo::Context> &cr);
