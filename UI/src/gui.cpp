@@ -4,18 +4,21 @@
 #include "gui.h"
 #include <iostream>
 #include <gdk/gdkx.h>
+#include <opencv2/opencv.hpp>
 
 Gui::Gui()
-: l1_box(                   Gtk::ORIENTATION_VERTICAL,    4),
-  l2_box_top(               Gtk::ORIENTATION_HORIZONTAL,  4),
-  l4_options_CONTINUOUS(    Gtk::ORIENTATION_HORIZONTAL,  4),
-  l4_options_SINGLE_CAPTURE(Gtk::ORIENTATION_HORIZONTAL,  4),
-  l4_options_HDR(           Gtk::ORIENTATION_HORIZONTAL,  4),
+: l1_box(                   Gtk::ORIENTATION_VERTICAL,  4),
+  l2_box_top(               Gtk::ORIENTATION_HORIZONTAL,4),
+  l4_options_CONTINUOUS(    Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_SINGLE_CAPTURE(Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_HDR(           Gtk::ORIENTATION_VERTICAL,  4),
   save("Save"),
+  adjustment_exposure(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
+  adjustment_iso(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
   exposure(adjustment_exposure),
   iso(adjustment_iso),
-  adjustment_exposure(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
-  adjustment_iso(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0))
+  exposure_label("Exposure [1-100]", Gtk::ALIGN_START),
+  iso_label("ISO [1-100]", Gtk::ALIGN_START)
 {
   // set title of new window.
   set_title("18-500 Team D7 GUI");
@@ -40,16 +43,17 @@ Gui::Gui()
   l3_stack.add(l4_options_SINGLE_CAPTURE, "single capture options");
   l3_stack.add(l4_options_HDR, "HDR options");
   l3_stack.set_visible_child(l4_options_CONTINUOUS);
-  l4_options_CONTINUOUS.pack_start(save, false, false);
   l4_options_SINGLE_CAPTURE.pack_start(save, false, false);
+  l4_options_SINGLE_CAPTURE.pack_start(exposure_label, false, false);
   l4_options_SINGLE_CAPTURE.pack_start(exposure, false, false);
+  l4_options_SINGLE_CAPTURE.pack_start(iso_label, false, false);
   l4_options_SINGLE_CAPTURE.pack_start(iso, false, false);
-  l4_options_HDR.pack_start(save, false, false);
   save.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
   exposure.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_exposure_change));
   iso.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_iso_change));
   
   show_all_children();
+  std::cout << "GUI Setup finished." << std::endl;
 }
 
 Gui::~Gui() {}
@@ -80,6 +84,8 @@ void Gui::on_state_change(CameraState state) {
 
 void Gui::on_exposure_change() {
   l3_viewfinder.camera.set(
+      CV_CAP_PROP_AUTO_EXPOSURE,0);
+  l3_viewfinder.camera.set(
       CV_CAP_PROP_EXPOSURE, exposure.get_value_as_int());
 }
 
@@ -91,8 +97,9 @@ void Gui::on_iso_change() {
 void Gui::on_save() {
   std::stringstream ss;
   ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  ss << ".jpg";
   l3_viewfinder.save(ss.str().c_str());
-  Gui::set_current_state(CameraState::CONTINUOUS);
+  Gui::on_state_change(CameraState::CONTINUOUS);
 }
 
 void Gui::populate_toolbar() {
