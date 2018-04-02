@@ -8,7 +8,7 @@ from subprocess import call
 
 if __name__=="__main__":
     # Options for timelapse
-    nimages = 10 #2160
+    nimages = 1 #2160
     delay = 10
     basename = 'image'
     datestring = datetime.now().__format__('%Y-%m-%d_%I%p')
