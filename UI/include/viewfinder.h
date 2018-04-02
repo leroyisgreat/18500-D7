@@ -18,7 +18,9 @@ class Viewfinder : public Gtk::DrawingArea {
 public:
 	Viewfinder();
 	virtual ~Viewfinder();
-  void setCameraState(CameraState state);
+  void set_camera_state(CameraState state);
+  void get_capture();
+  void save(char *filename);
 
 protected:
   cv::VideoCapture cv_cap;
@@ -27,6 +29,7 @@ protected:
   bool on_timeout ();
 
   CameraState current_state;
+  std::vector<cv::Mat> captures;
 
 private:
   void draw_hud(const Cairo::RefPtr<Cairo::Context> &cr, 

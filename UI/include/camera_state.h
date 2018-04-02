@@ -12,6 +12,7 @@
 
 enum CameraState {
   NONE,
+  SINGLE_CAPTURE,
 	HDR,
 	AF
 };

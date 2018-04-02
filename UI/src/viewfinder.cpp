@@ -94,8 +94,11 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
  
 	cv::Mat cv_frame, cv_frame1;
 
-  // read a frame and puts it into cv_frame
-	cv_cap.read(cv_frame); 
+  if (current_state == NONE) {
+    cv_cap >> cv_frame;
+  } else {
+    cv_frame = captures.back();
+  }
  
 	if (cv_frame.empty()) return false;
  
@@ -136,6 +139,19 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
   return true;
 }
 
-void Viewfinder::setCameraState(CameraState state) {
+void Viewfinder::set_camera_state(CameraState state) {
   current_state = state;
+}
+
+void Viewfinder::get_capture() {
+	if (!cv_opened) return;
+ 
+	cv::Mat frame;
+  cv_cap >> frame; 
+  captures.clear();
+  captures.push_back(frame.clone());
+}
+
+void save(char *filename) {
+
 }

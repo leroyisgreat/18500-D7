@@ -10,7 +10,7 @@ Gui::Gui()
 : l1_box(       Gtk::ORIENTATION_VERTICAL,    4),
   l2_box_top(   Gtk::ORIENTATION_HORIZONTAL,  4),
   l3_box_left(  Gtk::ORIENTATION_VERTICAL,    4),
-  op_button_1("Option 1"),
+  save("Save"),
   op_button_2("Option 2"),
   op_button_3("Option 3")
 {
@@ -37,8 +37,7 @@ Gui::Gui()
 
   // call the same signal handler with a different argument,
   // passing a pointer to "button 2" instead.
-  op_button_1.signal_clicked().connect(sigc::bind<-1, CameraState>(
-              sigc::mem_fun(*this, &Gui::on_button_clicked), CameraState::NONE));
+  save.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
   op_button_2.signal_clicked().connect(sigc::bind<-1, CameraState>(
               sigc::mem_fun(*this, &Gui::on_button_clicked), CameraState::NONE));
   op_button_3.signal_clicked().connect(sigc::bind<-1, CameraState>(
@@ -55,7 +54,7 @@ Gui::~Gui() {}
 
 void Gui::on_button_clicked(CameraState state) {
   current_state = state;
-  l3_viewfinder.setCameraState(state);
+  l3_viewfinder.set_camera_state(state);
   // viewfinder must be refreshed
   l3_viewfinder.queue_draw();
   std::cout << "State button - " << state << " was pressed" << std::endl;
@@ -69,12 +68,25 @@ void Gui::on_button_clicked(CameraState state) {
   }
 }
 
+void Gui::on_save() {
+  l3_viewfinder.save(std::ctime(std::chrono::system_clock::now()));
+}
+
+void Gui::take_plain_photo() {
+  l3_viewfinder.set_camera_state(CameraState::SINGLE_CAPTURE);
+  l3_viewfinder.get_capture();
+  l3_viewfinder.queue_draw();
+  std::cout << "Photo captured" << std::endl;
+}
 
 void Gui::populate_toolbar() {
   // create the photo capture button
   auto pc_image = new Gtk::Image("resources/shoot.ico");
   auto pc_button = new Gtk::ToolButton(*pc_image, "shoot");
   pc_button->set_tooltip_text("Take photo");
+  // link photo capture button to function
+  pc_button->signal_clicked().connect(
+      sigc::mem_fun(*this, &Gui::take_plain_photo));
   l2_toolbar.append(*pc_button);
 
   // create the HDR mode button

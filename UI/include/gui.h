@@ -44,6 +44,7 @@ public:
 protected:
   // Signal handlers:
   void on_button_clicked(CameraState state);
+  void take_plain_photo();
 
   // Child widgets:
   Gtk::Box            l1_box;
@@ -51,7 +52,7 @@ protected:
   Gtk::Toolbar        l2_toolbar;
   Gtk::Box            l3_box_left;
   Viewfinder          l3_viewfinder;
-  Gtk::Button         op_button_1, op_button_2, op_button_3;
+  Gtk::Button         save, op_button_2, op_button_3;
 
 	// camera state information:
 	CameraState current_state;
