@@ -77,6 +77,7 @@ void Gui::on_state_change(CameraState state) {
     case CameraState::HDR:
       l3_stack.set_visible_child(l4_options_HDR);
       l3_viewfinder.hdr();
+      Gui::on_state_change(CameraState::SINGLE_CAPTURE);
       break;
     default:
       std::cerr << "Error unknown camera state enterred" << std::endl;

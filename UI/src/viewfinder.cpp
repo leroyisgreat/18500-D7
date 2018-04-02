@@ -14,8 +14,10 @@
 #include <gdkmm/general.h> // set_source_pixbuf()
 #include <giomm/resource.h>
 #include <glibmm/fileutils.h>
+#include <python2.7/Python.h>
 
 Viewfinder::Viewfinder() {
+  Py_Initialize();
   // open camera
   std::cout << "Opening Raspbery Pi Camera..." << std::endl;
   if (!camera.open()) {
@@ -180,6 +182,8 @@ void Viewfinder::hdr() {
 	if (!camera.isOpened()) return;
  
 	cv::Mat frame;
-  // ...
+  FILE* file = fopen("~/workspace/18500-D7/hdr/runhdrpi.py", "r");
+  PyRun_SimpleFile(file, "~/workspace/18500-D7/hdr/runhdrpi.py");
+  frame = cv::imread("../hdr/o.jpg", CV_LOAD_IMAGE_COLOR);
   captures.push_back(frame.clone());
 }
