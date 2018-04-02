@@ -20,7 +20,7 @@
  *  | | ----------------------------------- | |
  *  | |                                     | |
  *  | | ----------------------------------- | |
- *  | | | m_ToolPalette                   | | |
+ *  | | | m_Toolbar                       | | |
  *  | | ----------------------------------- | |
  *  | --------------------------------------- |
  *  -------------------------------------------
@@ -43,22 +43,32 @@ public:
 
 protected:
   // Signal handlers:
-  void on_button_clicked(CameraState state);
-  void take_plain_photo();
+  void on_state_change(CameraState state);
+  void on_exposure_change();
+  void on_iso_change();
+  void on_save();
 
   // Child widgets:
   Gtk::Box            l1_box;
   Gtk::Box            l2_box_top;
   Gtk::Toolbar        l2_toolbar;
-  Gtk::Box            l3_box_left;
+  Gtk::Stack          l3_stack;
   Viewfinder          l3_viewfinder;
-  Gtk::Button         save, op_button_2, op_button_3;
+  Gtk::Box            l4_options_CONTINUOUS;
+  Gtk::Box            l4_options_SINGLE_CAPTURE;
+  Gtk::Box            l4_options_HDR;
+  Gtk::Button         save;
+  Gtk::SpinButton     exposure;
+  Gtk::SpinButton     iso;
+  Glib::RefPtr<Gtk::Adjustment> adjustment_exposure;
+  Glib::RefPtr<Gtk::Adjustment> adjustment_iso;
 
 	// camera state information:
 	CameraState current_state;
 
 private:
   void populate_toolbar();
+  void set_current_state(CameraState state);
 };
 
 #endif // GUI_H

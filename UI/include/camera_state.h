@@ -11,10 +11,9 @@
 #define CAMERA_STATE_H
 
 enum CameraState {
-  NONE,
+  CONTINUOUS,
   SINGLE_CAPTURE,
-	HDR,
-	AF
+	HDR
 };
 
 #endif // CAMERA_STATE_H

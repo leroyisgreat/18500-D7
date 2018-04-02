@@ -16,18 +16,29 @@
 #include <glibmm/fileutils.h>
 #include <iostream>
 
-Viewfinder::Viewfinder() : cv_opened(false) {
-  cv_cap.open(0);
-
-  if (cv_cap.isOpened() == true) {
-      cv_opened = true;
-      // call on_timeout once every 50ms (20 times a second)
-      // this is the Gtk(TM) way to redraw a window on command
-      Glib::signal_timeout().connect(sigc::mem_fun(*this, &Viewfinder::on_timeout), 50);
+Viewfinder::Viewfinder() {
+  // open camera
+  std::cout << "Opening Raspbery Pi Camera..." << std::endl;
+  if (false){//!camera.open()) {
+    // Camera didn't successfully open.
+    std::cerr << "Opening Raspberry Pi Camera failed." << std::endl; 
+    std::cerr << "Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?" << std::endl;
+  } else {
+    // Waiting for camera to "stabalize"
+    std::cout << "Sleeping for 3 seconds..." << std::endl;
+    sleep(3);
+    // Camera opened successfully
+    //
+    // call on_timeout once every 50ms (20 times a second)
+    // this is the Gtk(TM) way to redraw a window on command
+    Glib::signal_timeout().connect(sigc::mem_fun(*this, &Viewfinder::on_timeout), 50);
   }
+  std::cout << "Setup finished." << std::endl;
 }
 
-Viewfinder::~Viewfinder() {}
+Viewfinder::~Viewfinder() {
+  camera.release();
+}
 
 bool Viewfinder::on_timeout() {
   Glib::RefPtr<Gdk::Window> win = get_window();
@@ -69,12 +80,19 @@ void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
   cr->restore();
 
   Glib::RefPtr<Pango::Layout> layout;
-  if (current_state == HDR) {
-    layout = create_pango_layout("HDR");
-  } else if (current_state == AF) {
-    layout = create_pango_layout("AF");
-  } else {
-    layout = create_pango_layout("...");
+  switch (current_state) {
+    case CameraState::CONTINUOUS:
+      layout = create_pango_layout("LIVE");
+      break;
+    case CameraState::SINGLE_CAPTURE:
+      layout = create_pango_layout("ONE SHOT");
+      break;
+    case CameraState::HDR:
+      layout = create_pango_layout("HDR");
+      break;
+    default:
+      layout = create_pango_layout("...");
+      break;
 	}
 
   int text_width;
@@ -90,12 +108,15 @@ void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
 }
 
 bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
-	if (!cv_opened) return false;
+	if (!camera.isOpened()) return false;
  
 	cv::Mat cv_frame, cv_frame1;
 
-  if (current_state == NONE) {
-    cv_cap >> cv_frame;
+  // if the current mode is continuous, operate as video playback
+  // else show the latest image taken
+  if (current_state == CONTINUOUS) {
+    camera.grab();
+    camera.retrieve(cv_frame);
   } else {
     cv_frame = captures.back();
   }
@@ -104,8 +125,6 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
  
   // apply a threshold to the frame
 	cv::cvtColor (cv_frame, cv_frame1, CV_BGR2RGB);
-		 
-	//Gdk::Cairo::set_source_pixbuf (cr, );
 
   Glib::RefPtr<Gdk::Pixbuf> buf = Gdk::Pixbuf::create_from_data(
 												cv_frame1.data, 
@@ -144,14 +163,15 @@ void Viewfinder::set_camera_state(CameraState state) {
 }
 
 void Viewfinder::get_capture() {
-	if (!cv_opened) return;
+	if (!camera.isOpened()) return;
  
 	cv::Mat frame;
-  cv_cap >> frame; 
+  camera.grab();
+  camera.retrieve(frame);
   captures.clear();
   captures.push_back(frame.clone());
 }
 
-void save(char *filename) {
-
+void Viewfinder::save(const char *filename) {
+  cv::imwrite(filename, captures.back());
 }

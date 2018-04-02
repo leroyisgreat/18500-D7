@@ -4,15 +4,18 @@
 #include "gui.h"
 #include <iostream>
 #include <gdk/gdkx.h>
-#include "Python.h"
 
 Gui::Gui()
-: l1_box(       Gtk::ORIENTATION_VERTICAL,    4),
-  l2_box_top(   Gtk::ORIENTATION_HORIZONTAL,  4),
-  l3_box_left(  Gtk::ORIENTATION_VERTICAL,    4),
+: l1_box(                   Gtk::ORIENTATION_VERTICAL,    4),
+  l2_box_top(               Gtk::ORIENTATION_HORIZONTAL,  4),
+  l4_options_CONTINUOUS(    Gtk::ORIENTATION_HORIZONTAL,  4),
+  l4_options_SINGLE_CAPTURE(Gtk::ORIENTATION_HORIZONTAL,  4),
+  l4_options_HDR(           Gtk::ORIENTATION_HORIZONTAL,  4),
   save("Save"),
-  op_button_2("Option 2"),
-  op_button_3("Option 3")
+  exposure(adjustment_exposure),
+  iso(adjustment_iso),
+  adjustment_exposure(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
+  adjustment_iso(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0))
 {
   // set title of new window.
   set_title("18-500 Team D7 GUI");
@@ -27,56 +30,69 @@ Gui::Gui()
   l1_box.pack_start(l2_box_top, true, true);
   l1_box.pack_start(l2_toolbar, false, false);
   Gui::populate_toolbar();
-  l2_toolbar.set_icon_size(Gtk::BuiltinIconSize::ICON_SIZE_SMALL_TOOLBAR);
 
   // add left panel to top l2 box
-  l2_box_top.pack_start(l3_box_left, false, false);
-
+  l2_box_top.pack_start(l3_stack, false, false);
   // add viewfinder to top l2 box
   l2_box_top.pack_start(l3_viewfinder, true, true);
 
-  // call the same signal handler with a different argument,
-  // passing a pointer to "button 2" instead.
+  l3_stack.add(l4_options_CONTINUOUS, "continuous options");
+  l3_stack.add(l4_options_SINGLE_CAPTURE, "single capture options");
+  l3_stack.add(l4_options_HDR, "HDR options");
+  l3_stack.set_visible_child(l4_options_CONTINUOUS);
+  l4_options_CONTINUOUS.pack_start(save, false, false);
+  l4_options_SINGLE_CAPTURE.pack_start(save, false, false);
+  l4_options_SINGLE_CAPTURE.pack_start(exposure, false, false);
+  l4_options_SINGLE_CAPTURE.pack_start(iso, false, false);
+  l4_options_HDR.pack_start(save, false, false);
   save.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
-  op_button_2.signal_clicked().connect(sigc::bind<-1, CameraState>(
-              sigc::mem_fun(*this, &Gui::on_button_clicked), CameraState::NONE));
-  op_button_3.signal_clicked().connect(sigc::bind<-1, CameraState>(
-              sigc::mem_fun(*this, &Gui::on_button_clicked), CameraState::NONE));
+  exposure.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_exposure_change));
+  iso.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_iso_change));
   
-  l3_box_left.pack_start(op_button_1, false, false);
-  l3_box_left.pack_start(op_button_2, false, false);
-  l3_box_left.pack_start(op_button_3, false, false);
-
   show_all_children();
 }
 
 Gui::~Gui() {}
 
-void Gui::on_button_clicked(CameraState state) {
-  current_state = state;
-  l3_viewfinder.set_camera_state(state);
+void Gui::on_state_change(CameraState state) {
+  std::cout << "Changing Camera State" << std::endl;
+
+  Gui::set_current_state(state);
   // viewfinder must be refreshed
   l3_viewfinder.queue_draw();
-  std::cout << "State button - " << state << " was pressed" << std::endl;
-  if (state == CameraState::HDR) {
-    Py_Initialize();
-    PyObject* py_HDR_str = PyString_FromString((char*)"/home/leroyce/workspace/18500/hdr/hdr.py");
-    PyObject* py_HDR = PyImport_Import(py_HDR_str);
-    if (!py_HDR) std::cout << "ERROR" << std::endl;
-    PyObject* myFunction = PyObject_GetAttrString(py_HDR,(char*)"HDR");
-    PyObject_CallObject(myFunction, NULL);
+
+  switch (state) {
+    case CameraState::CONTINUOUS:
+      l3_stack.set_visible_child(l4_options_CONTINUOUS);
+      break;
+    case CameraState::SINGLE_CAPTURE:
+      l3_stack.set_visible_child(l4_options_SINGLE_CAPTURE);
+      l3_viewfinder.get_capture();
+      l3_viewfinder.queue_draw();
+      break;
+    case CameraState::HDR:
+      l3_stack.set_visible_child(l4_options_HDR);
+      break;
+    default:
+      std::cerr << "Error unknown camera state enterred" << std::endl;
   }
 }
 
-void Gui::on_save() {
-  l3_viewfinder.save(std::ctime(std::chrono::system_clock::now()));
+void Gui::on_exposure_change() {
+  l3_viewfinder.camera.set(
+      CV_CAP_PROP_EXPOSURE, exposure.get_value_as_int());
 }
 
-void Gui::take_plain_photo() {
-  l3_viewfinder.set_camera_state(CameraState::SINGLE_CAPTURE);
-  l3_viewfinder.get_capture();
-  l3_viewfinder.queue_draw();
-  std::cout << "Photo captured" << std::endl;
+void Gui::on_iso_change() {
+  l3_viewfinder.camera.set(
+      CV_CAP_PROP_GAIN, iso.get_value_as_int());
+}
+
+void Gui::on_save() {
+  std::stringstream ss;
+  ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  l3_viewfinder.save(ss.str().c_str());
+  Gui::set_current_state(CameraState::CONTINUOUS);
 }
 
 void Gui::populate_toolbar() {
@@ -85,13 +101,32 @@ void Gui::populate_toolbar() {
   auto pc_button = new Gtk::ToolButton(*pc_image, "shoot");
   pc_button->set_tooltip_text("Take photo");
   // link photo capture button to function
-  pc_button->signal_clicked().connect(
-      sigc::mem_fun(*this, &Gui::take_plain_photo));
+  pc_button->signal_clicked().connect(sigc::bind<CameraState>(
+      sigc::mem_fun(*this, &Gui::on_state_change),
+      CameraState::SINGLE_CAPTURE));
   l2_toolbar.append(*pc_button);
+
+  // create the photo capture button
+  auto live_image = new Gtk::Image("resources/live.ico");
+  auto live_button = new Gtk::ToolButton(*live_image, "live");
+  live_button->set_tooltip_text("Continuous Shooting");
+  // link photo capture button to change camera state
+  live_button->signal_clicked().connect(sigc::bind<CameraState>(
+      sigc::mem_fun(*this, &Gui::on_state_change),
+      CameraState::CONTINUOUS));
+  l2_toolbar.append(*live_button);
 
   // create the HDR mode button
   auto hdr_image = new Gtk::Image("resources/hdr.ico");
   auto hdr_button = new Gtk::ToolButton(*hdr_image, "hdr");
   hdr_button->set_tooltip_text("Toggle HDR mode");
+  hdr_button->signal_clicked().connect(sigc::bind<CameraState>(
+      sigc::mem_fun(*this, &Gui::on_state_change),
+      CameraState::HDR));
   l2_toolbar.append(*hdr_button);
+}
+
+void Gui::set_current_state(CameraState state) {
+  current_state = state;
+  l3_viewfinder.set_camera_state(state);
 }
