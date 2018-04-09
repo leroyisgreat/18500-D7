@@ -22,7 +22,8 @@ accessing the camera device descriptor - how did this work?) this had to go
 with a proper pipeline replacing it.
 
 Many comments were added, like a final Gtk widget nesting description (here it
-is if you'd like to see it:```
+is if you'd like to see it:
+```
    ----------------------------------------------
    | window                                     |
    |                                            |
@@ -44,4 +45,5 @@ is if you'd like to see it:```
    | | -------------------------------------- | |
    | ------------------------------------------ |
    ----------------------------------------------
-```)
+```
+)
