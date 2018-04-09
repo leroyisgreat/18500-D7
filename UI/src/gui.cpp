@@ -60,7 +60,9 @@ Gui::Gui()
   std::cout << "GUI Setup finished." << std::endl;
 }
 
-Gui::~Gui() {}
+Gui::~Gui() {
+  Py_Finalize();
+}
 
 void Gui::on_state_change(CameraState state) {
   std::cout << "Changing Camera State" << std::endl;
