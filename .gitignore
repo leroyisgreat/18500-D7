@@ -34,5 +34,8 @@
 # Vim swap files
 *.swp
 
+# separate Git repo for a good C++ Raspberry Pi Camera API:
+# https://github.com/cedricve/raspicam
+raspicam/
 # idk why I have this folder
 UI/scraps/
