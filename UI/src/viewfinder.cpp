@@ -14,15 +14,13 @@
 #include <gdkmm/general.h> // set_source_pixbuf()
 #include <giomm/resource.h>
 #include <glibmm/fileutils.h>
-#include <python2.7/Python.h>
 
 Viewfinder::Viewfinder() {
-  Py_Initialize();
   // open camera
-  std::cout << "Opening Raspbery Pi Camera..." << std::endl;
-  if (!camera.open()) {
+  std::cout << "Opening Camera..." << std::endl;
+  if (!camera.open(0)) {
     // Camera didn't successfully open.
-    std::cerr << "Opening Raspberry Pi Camera failed." << std::endl; 
+    std::cerr << "Opening Camera failed." << std::endl; 
     std::cerr << "Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?" << std::endl;
   } else {
     // Waiting for camera to "stabalize"
@@ -30,9 +28,10 @@ Viewfinder::Viewfinder() {
     sleep(3);
     // Camera opened successfully
     //
-    // call on_timeout once every 50ms (20 times a second)
+    // call on_timeout once every FRAMERATE_INTERVAL (in ms)
     // this is the Gtk(TM) way to redraw a window on command
-    Glib::signal_timeout().connect(sigc::mem_fun(*this, &Viewfinder::on_timeout), 50);
+    Glib::signal_timeout().connect(
+        sigc::mem_fun(*this, &Viewfinder::on_timeout), FRAMERATE_INTERVAL);
   }
   current_state = CameraState::CONTINUOUS;
   std::cout << "Setup finished." << std::endl;
@@ -50,6 +49,58 @@ bool Viewfinder::on_timeout() {
     // force redraw of the window
     win->invalidate_rect(r, false);
   }
+
+  return true;
+}
+
+bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
+	if (!camera.isOpened()) return false;
+ 
+	cv::Mat cv_frame, cv_frame1;
+
+  camera.grab();
+  if (current_state == CONTINUOUS) {
+    // if the current mode is continuous, operate as video playback
+    camera.retrieve(cv_frame);
+  } else {
+    // else show the latest image taken
+    if (!captures.empty())
+      cv_frame = captures.back();
+  }
+ 
+	if (cv_frame.empty()) return false;
+ 
+  // apply a threshold to the frame
+	cv::cvtColor (cv_frame, cv_frame1, CV_BGR2RGB);
+
+  Glib::RefPtr<Gdk::Pixbuf> buf = Gdk::Pixbuf::create_from_data(
+												cv_frame1.data, 
+												Gdk::COLORSPACE_RGB, 
+												false, 
+												8, 
+                        cv_frame1.cols, 
+                        cv_frame1.rows, 
+                        cv_frame1.step);
+
+  Gtk::Allocation allocation = get_allocation();
+  const int frame_width = allocation.get_width();
+  const int frame_height = allocation.get_height();
+  const int img_width = buf->get_width();
+  const int img_height = buf->get_height();
+
+  // Draw the image in the top right corner, fixed aspect ratio to fit the window
+  double scale = std::min(frame_width /(double) img_width,
+                          frame_height /(double) img_height);
+  int scaled_width = img_width*scale;
+  int scaled_height = img_height*scale;
+  Glib::RefPtr<Gdk::Pixbuf> buf_scaled = 
+        buf->scale_simple(scaled_width, 
+                          scaled_height, 
+                          Gdk::INTERP_BILINEAR);
+  Gdk::Cairo::set_source_pixbuf(cr, buf_scaled, 0, 0);
+  cr->paint(); 
+		 
+  Viewfinder::draw_hud(cr, scaled_width, scaled_height);
 
   return true;
 }
@@ -109,81 +160,23 @@ void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
   layout->show_in_cairo_context(cr);
 }
 
-bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
-	if (!camera.isOpened()) return false;
- 
-	cv::Mat cv_frame, cv_frame1;
-
-  // if the current mode is continuous, operate as video playback
-  // else show the latest image taken
-  if (current_state == CONTINUOUS) {
+cv::Mat Viewfinder::get_frame(bool fresh) {
+  if (fresh) {
+    cv::Mat frame;
     camera.grab();
-    camera.retrieve(cv_frame);
-  } else if (!captures.empty()) {
-    cv_frame = captures.back();
+    camera.retrieve(frame);
+    set_frame(frame.clone());
   }
- 
-	if (cv_frame.empty()) return false;
- 
-  // apply a threshold to the frame
-	cv::cvtColor (cv_frame, cv_frame1, CV_BGR2RGB);
 
-  Glib::RefPtr<Gdk::Pixbuf> buf = Gdk::Pixbuf::create_from_data(
-												cv_frame1.data, 
-												Gdk::COLORSPACE_RGB, 
-												false, 
-												8, 
-                        cv_frame1.cols, 
-                        cv_frame1.rows, 
-                        cv_frame1.step);
+  // if there are no frames, throw exception
+  if (captures.empty()) throw "no frames on captures vector";
 
-  Gtk::Allocation allocation = get_allocation();
-  const int frame_width = allocation.get_width();
-  const int frame_height = allocation.get_height();
-  const int img_width = buf->get_width();
-  const int img_height = buf->get_height();
-
-  // Draw the image in the top right corner, fixed aspect ratio to fit the window
-  double scale = std::min(frame_width /(double) img_width,
-                          frame_height /(double) img_height);
-  int scaled_width = img_width*scale;
-  int scaled_height = img_height*scale;
-  Glib::RefPtr<Gdk::Pixbuf> buf_scaled = 
-        buf->scale_simple(scaled_width, 
-                          scaled_height, 
-                          Gdk::INTERP_BILINEAR);
-  Gdk::Cairo::set_source_pixbuf(cr, buf_scaled, 0, 0);
-  cr->paint(); 
-		 
-  Viewfinder::draw_hud(cr, scaled_width, scaled_height);
-
-  return true;
+  return captures.back().clone();
 }
 
-void Viewfinder::set_camera_state(CameraState state) {
-  current_state = state;
-}
-
-void Viewfinder::get_capture() {
-	if (!camera.isOpened()) return;
- 
-	cv::Mat frame;
-  camera.grab();
-  camera.retrieve(frame);
+void Viewfinder::set_frame(cv::Mat frame) {
+  // for now, there is only a need to store one element, but it is expected that
+  // this will change
   captures.clear();
-  captures.push_back(frame.clone());
-}
-
-void Viewfinder::save(const char *filename) {
-  cv::imwrite(filename, captures.back());
-}
-
-void Viewfinder::hdr() {
-	if (!camera.isOpened()) return;
- 
-	cv::Mat frame;
-  FILE* file = fopen("~/workspace/18500-D7/hdr/runhdrpi.py", "r");
-  PyRun_SimpleFile(file, "~/workspace/18500-D7/hdr/runhdrpi.py");
-  frame = cv::imread("../hdr/o.jpg", CV_LOAD_IMAGE_COLOR);
-  captures.push_back(frame.clone());
+  captures.push_back(frame);
 }

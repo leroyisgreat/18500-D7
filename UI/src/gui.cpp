@@ -5,6 +5,7 @@
 #include <iostream>
 #include <gdk/gdkx.h>
 #include <opencv2/opencv.hpp>
+#include <python2.7/Python.h>
 
 Gui::Gui()
 : l1_box(                   Gtk::ORIENTATION_VERTICAL,  4),
@@ -51,6 +52,9 @@ Gui::Gui()
   save.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
   exposure.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_exposure_change));
   iso.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_iso_change));
+
+  // setup Python environment
+  Py_Initialize();
   
   show_all_children();
   std::cout << "GUI Setup finished." << std::endl;
@@ -71,13 +75,12 @@ void Gui::on_state_change(CameraState state) {
       break;
     case CameraState::SINGLE_CAPTURE:
       l3_stack.set_visible_child(l4_options_SINGLE_CAPTURE);
-      l3_viewfinder.get_capture();
+      l3_viewfinder.get_frame(true);
       l3_viewfinder.queue_draw();
       break;
     case CameraState::HDR:
       l3_stack.set_visible_child(l4_options_HDR);
-      l3_viewfinder.hdr();
-      Gui::on_state_change(CameraState::SINGLE_CAPTURE);
+      hdr();
       break;
     default:
       std::cerr << "Error unknown camera state enterred" << std::endl;
@@ -85,14 +88,14 @@ void Gui::on_state_change(CameraState state) {
 }
 
 void Gui::on_exposure_change() {
-  l3_viewfinder.camera.set(
+  l3_viewfinder.set_property(
       CV_CAP_PROP_AUTO_EXPOSURE,0);
-  l3_viewfinder.camera.set(
+  l3_viewfinder.set_property(
       CV_CAP_PROP_EXPOSURE, exposure.get_value_as_int());
 }
 
 void Gui::on_iso_change() {
-  l3_viewfinder.camera.set(
+  l3_viewfinder.set_property(
       CV_CAP_PROP_GAIN, iso.get_value_as_int());
 }
 
@@ -100,7 +103,8 @@ void Gui::on_save() {
   std::stringstream ss;
   ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   ss << ".jpg";
-  l3_viewfinder.save(ss.str().c_str());
+  cv::Mat frame = l3_viewfinder.get_frame();
+  cv::imwrite(ss.str().c_str(), frame);
   Gui::on_state_change(CameraState::CONTINUOUS);
 }
 
@@ -139,3 +143,9 @@ void Gui::set_current_state(CameraState state) {
   current_state = state;
   l3_viewfinder.set_camera_state(state);
 }
+
+void Gui::hdr() {
+  FILE* file = fopen("~/workspace/18500-D7/hdr/runhdrpi.py", "r");
+  PyRun_SimpleFile(file, "~/workspace/18500-D7/hdr/runhdrpi.py");
+}
+
