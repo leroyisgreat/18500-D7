@@ -27,9 +27,9 @@ if __name__=="__main__":
     
     # Capture our images
     images = CaptureHDRStack(camera, emin, emax, nexp)
-    WriteResponseFile(images)
+    # WriteResponseFile(images)
     f.write('Captured HDR Stack.\n')
     # Merge them into an HDR image
-    imgname = 'output.jpg'
-    MergeHDRStack(imgname)
+    imgname = 'ouptupt.jpg'
+    MergeHDRStack(images, imgname)
     f.write('Merged HDR Stack.\n')
