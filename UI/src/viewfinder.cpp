@@ -167,29 +167,6 @@ void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
   layout->show_in_cairo_context(cr);
 }
 
-#if defined RPI
-void Viewfinder::rotate_camera() {
-  switch (current_orientation) {
-    case CameraOrientation::ONE:
-      current_orientation = CameraOrientation::TWO;
-      break;
-    case CameraOrientation::TWO:
-      current_orientation = CameraOrientation::THREE;
-      break;
-    case CameraOrientation::THREE:
-      current_orientation = CameraOrientation::FOUR;
-      break;
-    case CameraOrientation::FOUR:
-      current_orientation = CameraOrientation::ONE;
-      break;
-    default:
-      std::cerr << "Error unknown camera orientation entered" << std::endl;
-  }
-
-  camera.setRotation(current_orientation);
-}
-#endif
-
 cv::Mat Viewfinder::get_frame(bool fresh) {
   if (fresh) {
     cv::Mat frame;

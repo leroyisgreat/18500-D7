@@ -47,7 +47,6 @@ private:
   void on_exposure_change();
   void on_iso_change();
   void on_save();
-  void on_rotate();
 
   // regular functions
   void populate_toolbar();
@@ -63,10 +62,10 @@ private:
   Gtk::Box                      l4_options_CONTINUOUS;
   Gtk::Box                      l4_options_SINGLE_CAPTURE;
   Gtk::Box                      l4_options_HDR;
-  Gtk::Button                   save, rotate_vf;
+  Gtk::Button                   save;
   Glib::RefPtr<Gtk::Adjustment> adjustment_exposure, adjustment_iso;
   Gtk::SpinButton               exposure, iso;
-  Gtk::Label                    exposure_label, iso_label, rotate_vf_label;
+  Gtk::Label                    exposure_label, iso_label;
 
 	// camera Mode information:
 	CameraMode current_mode;

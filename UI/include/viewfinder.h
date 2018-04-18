@@ -16,7 +16,6 @@
 #define VIEWFINDER_H
 
 #include "camera_mode.h"
-#include "camera_orientation.h"
 #include <gtkmm/drawingarea.h>
 #include <opencv2/opencv.hpp>
 #include <raspicam/raspicam_cv.h>
@@ -74,13 +73,6 @@ public:
       camera.set(propId, value);
   }
 
-#if defined RPI
-  /**
-   * @brief rotates the camera
-   */
-  void rotate_camera();
-#endif
-
 private:
   /** @brief timeout function called at FRAMERATE_INTERVAL to re-fetch a frame
    * from the camera
@@ -106,9 +98,6 @@ private:
 
   /** @brief current mode the camera is in - determines HUD elements */
   CameraMode current_mode;
-
-  /** @brief current orientation the camera is in */
-  CameraOrientation current_orientation;
 
   /** @brief vector of frames recently captures - usually contains last capture
    * taken */

@@ -14,14 +14,12 @@ Gui::Gui()
   l4_options_SINGLE_CAPTURE(Gtk::ORIENTATION_VERTICAL,  4),
   l4_options_HDR(           Gtk::ORIENTATION_VERTICAL,  4),
   save("Save"),
-  rotate_vf("Rotate Viewfinder"),
   adjustment_exposure(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
   adjustment_iso(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
   exposure(adjustment_exposure),
   iso(adjustment_iso),
   exposure_label("Exposure [1-100]", Gtk::ALIGN_START),
-  iso_label("ISO [1-100]", Gtk::ALIGN_START),
-  rotate_vf_label("Rotate Viewfinder CW", Gtk::ALIGN_START)
+  iso_label("ISO [1-100]", Gtk::ALIGN_START)
 {
   // set title of new window.
   set_title("18-500 Team D7 GUI");
@@ -45,9 +43,6 @@ Gui::Gui()
 
   // add control options for each mode
   l3_stack.add(l4_options_CONTINUOUS, "continuous options");
-  l4_options_CONTINUOUS.pack_start(rotate_vf_label, false, false);
-  l4_options_CONTINUOUS.pack_start(rotate_vf, false, false);
-  rotate_vf.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_rotate));
 
   l3_stack.add(l4_options_SINGLE_CAPTURE, "single capture options");
   l4_options_SINGLE_CAPTURE.pack_start(save, false, false);
@@ -118,10 +113,6 @@ void Gui::on_save() {
   cv::Mat frame = l3_viewfinder.get_frame();
   cv::imwrite(ss.str().c_str(), frame);
   Gui::on_mode_change(CameraMode::CONTINUOUS);
-}
-
-void Gui::on_rotate() {
-  l3_viewfinder.rotate_camera();
 }
 
 void Gui::populate_toolbar() {
