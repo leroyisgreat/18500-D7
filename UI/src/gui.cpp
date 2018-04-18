@@ -88,6 +88,8 @@ void Gui::on_mode_change(CameraMode mode) {
     case CameraMode::HDR:
       l3_stack.set_visible_child(l4_options_HDR);
       hdr();
+      cv::Mat image = imread("../hdr/output.png", CV_LOAD_IMAGE_COLOR);
+      l3_viewfinder.set_frame(image);
       break;
     default:
       std::cerr << "Error unknown camera mode enterred" << std::endl;
