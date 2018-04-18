@@ -156,6 +156,8 @@ void Gui::set_current_mode(CameraMode mode) {
 void Gui::hdr() {
   l3_viewfinder.uninitialize_camera();
   FILE* file = fopen("/home/pi/workspace/18500-D7/hdr/runhdrpi.py", "r");
+  PyRun_SimpleString("import sys");
+  PyRun_SimpleString("sys.path.append('/home/pi/workspace/18500-D7/hdr/')");
   PyRun_SimpleFile(file, "/home/pi/workspace/18500-D7/hdr/runhdrpi.py");
   cv::Mat image = cv::imread("/home/pi/workspace/18500-D7/hdr/output.jpg", CV_LOAD_IMAGE_COLOR);
   l3_viewfinder.initialize_camera();
