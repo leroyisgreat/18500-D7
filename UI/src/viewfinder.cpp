@@ -18,12 +18,13 @@ Viewfinder::Viewfinder() {
   // open camera
   std::cout << "Opening Camera..." << std::endl;
 #if defined RPI
-  if (!camera.open()) {
+  initialize_camera();
+  if (!camera.isOpened()) {
     // Camera didn't successfully open.
     std::cerr << "Opening Camera failed." << std::endl; 
     std::cerr << "Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?" << std::endl;
 #elif defined V4L2
-  if (!camera.open(0)) {
+  if (!camera.isOpened(0)) {
     // Camera didn't successfully open.
     std::cerr << "Opening Camera failed." << std::endl; 
 #else
@@ -186,4 +187,24 @@ void Viewfinder::set_frame(cv::Mat frame) {
   // this will change
   captures.clear();
   captures.push_back(frame);
+}
+
+void Viewfinder::initialize_camera() {
+#if defined RPI
+  if (!camera.open()) {
+    // Camera didn't successfully open.
+    std::cerr << "Opening Camera failed." << std::endl; 
+    std::cerr << "Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?" << std::endl;
+#elif defined V4L2
+  if (!camera.open(0)) {
+    // Camera didn't successfully open.
+    std::cerr << "Opening Camera failed." << std::endl; 
+#else
+  if (false) {
+#endif
+  }
+}
+
+void Viewfinder::uninitialize_camera() {
+  camera.release();
 }

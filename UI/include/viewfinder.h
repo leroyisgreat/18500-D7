@@ -73,6 +73,9 @@ public:
       camera.set(propId, value);
   }
 
+  void initialize_camera();
+  void uninitialize_camera();
+
 private:
   /** @brief timeout function called at FRAMERATE_INTERVAL to re-fetch a frame
    * from the camera
