@@ -1,5 +1,5 @@
 /**
- * @file    camera_state.h
+ * @file    camera_mode.h
  *
  * @brief   enum for managing what UI elements are being configured
  *
@@ -7,13 +7,13 @@
  * @author  LeRoy Gary <lgary@andrew.cmu.edu>
  */
 
-#ifndef CAMERA_STATE_H
-#define CAMERA_STATE_H
+#ifndef CAMERA_MODE_H
+#define CAMERA_MODE_H
 
-enum CameraState {
+enum CameraMode {
   CONTINUOUS,
   SINGLE_CAPTURE,
 	HDR
 };
 
-#endif // CAMERA_STATE_H
+#endif // CAMERA_MODE_H

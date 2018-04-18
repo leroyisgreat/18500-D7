@@ -1,6 +1,6 @@
 // thanks https://git.gnome.org//browse/gstreamermm/tree/examples/media_player_gtkmm/player_window.cc
 
-#include "camera_state.h"
+#include "camera_mode.h"
 #include "gui.h"
 #include <iostream>
 #include <gdk/gdkx.h>
@@ -14,12 +14,14 @@ Gui::Gui()
   l4_options_SINGLE_CAPTURE(Gtk::ORIENTATION_VERTICAL,  4),
   l4_options_HDR(           Gtk::ORIENTATION_VERTICAL,  4),
   save("Save"),
+  rotate_vf("Rotate Viewfinder"),
   adjustment_exposure(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
   adjustment_iso(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
   exposure(adjustment_exposure),
   iso(adjustment_iso),
   exposure_label("Exposure [1-100]", Gtk::ALIGN_START),
-  iso_label("ISO [1-100]", Gtk::ALIGN_START)
+  iso_label("ISO [1-100]", Gtk::ALIGN_START),
+  rotate_vf_label("Rotate Viewfinder CW", Gtk::ALIGN_START)
 {
   // set title of new window.
   set_title("18-500 Team D7 GUI");
@@ -37,13 +39,17 @@ Gui::Gui()
 
   // add left panel to top l2 box
   l2_box_top.pack_start(l3_stack, false, false);
+
   // add viewfinder to top l2 box
   l2_box_top.pack_start(l3_viewfinder, true, true);
 
+  // add control options for each mode
   l3_stack.add(l4_options_CONTINUOUS, "continuous options");
+  l4_options_CONTINUOUS.pack_start(rotate_vf_label, false, false);
+  l4_options_CONTINUOUS.pack_start(rotate_vf, false, false);
+  rotate_vf.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_rotate));
+
   l3_stack.add(l4_options_SINGLE_CAPTURE, "single capture options");
-  l3_stack.add(l4_options_HDR, "HDR options");
-  l3_stack.set_visible_child(l4_options_CONTINUOUS);
   l4_options_SINGLE_CAPTURE.pack_start(save, false, false);
   l4_options_SINGLE_CAPTURE.pack_start(exposure_label, false, false);
   l4_options_SINGLE_CAPTURE.pack_start(exposure, false, false);
@@ -52,6 +58,10 @@ Gui::Gui()
   save.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
   exposure.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_exposure_change));
   iso.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_iso_change));
+
+  l3_stack.add(l4_options_HDR, "HDR options");
+
+  l3_stack.set_visible_child(l4_options_CONTINUOUS);
 
   // setup Python environment
   Py_Initialize();
@@ -64,28 +74,28 @@ Gui::~Gui() {
   Py_Finalize();
 }
 
-void Gui::on_state_change(CameraState state) {
-  std::cout << "Changing Camera State" << std::endl;
+void Gui::on_mode_change(CameraMode mode) {
+  std::cout << "Changing Camera mode" << std::endl;
 
-  Gui::set_current_state(state);
+  Gui::set_current_mode(mode);
   // viewfinder must be refreshed
   l3_viewfinder.queue_draw();
 
-  switch (state) {
-    case CameraState::CONTINUOUS:
+  switch (mode) {
+    case CameraMode::CONTINUOUS:
       l3_stack.set_visible_child(l4_options_CONTINUOUS);
       break;
-    case CameraState::SINGLE_CAPTURE:
+    case CameraMode::SINGLE_CAPTURE:
       l3_stack.set_visible_child(l4_options_SINGLE_CAPTURE);
       l3_viewfinder.get_frame(true);
       l3_viewfinder.queue_draw();
       break;
-    case CameraState::HDR:
+    case CameraMode::HDR:
       l3_stack.set_visible_child(l4_options_HDR);
       hdr();
       break;
     default:
-      std::cerr << "Error unknown camera state enterred" << std::endl;
+      std::cerr << "Error unknown camera mode enterred" << std::endl;
   }
 }
 
@@ -107,7 +117,11 @@ void Gui::on_save() {
   ss << ".jpg";
   cv::Mat frame = l3_viewfinder.get_frame();
   cv::imwrite(ss.str().c_str(), frame);
-  Gui::on_state_change(CameraState::CONTINUOUS);
+  Gui::on_mode_change(CameraMode::CONTINUOUS);
+}
+
+void Gui::on_rotate() {
+  l3_viewfinder.rotate_camera();
 }
 
 void Gui::populate_toolbar() {
@@ -116,34 +130,34 @@ void Gui::populate_toolbar() {
   auto pc_button = new Gtk::ToolButton(*pc_image, "shoot");
   pc_button->set_tooltip_text("Take photo");
   // link photo capture button to function
-  pc_button->signal_clicked().connect(sigc::bind<CameraState>(
-      sigc::mem_fun(*this, &Gui::on_state_change),
-      CameraState::SINGLE_CAPTURE));
+  pc_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::SINGLE_CAPTURE));
   l2_toolbar.append(*pc_button);
 
   // create the photo capture button
   auto live_image = new Gtk::Image("resources/live.ico");
   auto live_button = new Gtk::ToolButton(*live_image, "live");
   live_button->set_tooltip_text("Continuous Shooting");
-  // link photo capture button to change camera state
-  live_button->signal_clicked().connect(sigc::bind<CameraState>(
-      sigc::mem_fun(*this, &Gui::on_state_change),
-      CameraState::CONTINUOUS));
+  // link photo capture button to change camera mode 
+  live_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::CONTINUOUS));
   l2_toolbar.append(*live_button);
 
   // create the HDR mode button
   auto hdr_image = new Gtk::Image("resources/hdr.ico");
   auto hdr_button = new Gtk::ToolButton(*hdr_image, "hdr");
   hdr_button->set_tooltip_text("Toggle HDR mode");
-  hdr_button->signal_clicked().connect(sigc::bind<CameraState>(
-      sigc::mem_fun(*this, &Gui::on_state_change),
-      CameraState::HDR));
+  hdr_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::HDR));
   l2_toolbar.append(*hdr_button);
 }
 
-void Gui::set_current_state(CameraState state) {
-  current_state = state;
-  l3_viewfinder.set_camera_state(state);
+void Gui::set_current_mode(CameraMode mode) {
+  current_mode = mode;
+  l3_viewfinder.set_camera_mode(mode);
 }
 
 void Gui::hdr() {
