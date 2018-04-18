@@ -34,11 +34,6 @@
 # Vim swap files
 *.swp
 
-# image files
-*.jpg
-*.png
-*.tif
-
 # separate Git repo for a good C++ Raspberry Pi Camera API:
 # https://github.com/cedricve/raspicam
 raspicam/
