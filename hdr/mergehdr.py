@@ -256,13 +256,24 @@ def computeHDR(images, log_exposure_times, smoothing_lambda=100., gamma=0.6):
     return output.astype(np.uint8)
 
 
-def MergeHDRStack(image_names, image_name):
+def MergeHDRStack(image_name):
+    """MergeHDRStack(fnames)
+        Merge the files contained in fnames using enfuse.
+        options are passed to enfuse.
+    """
+    outfile = '--output=%s' % (image_name)
+
+    call(["enfuse", outfile, "@hdrstack"])
+    print "wrote file %s" % (image_name)
+    return True
+
+def MergeHDRStackNew(image_names, image_name):
 
     images = []
     log_exposure_times = []
     for step in image_names:
         # Set filename based on exposured
-        exp = int(step.split(".")[0][1:])
+        exp = log(int(step.split(".")[0][1:]))
         im = cv2.imread(step)
         images.append(im)
         log_exposure_times.append(exp)
@@ -272,6 +283,8 @@ def MergeHDRStack(image_names, image_name):
     # outfile = '--output=%s' % (image_name)
     # call(["enfuse", outfile, "@hdrstack"])
     
+
+
 
     print "wrote file %s" % (image_name)
     return True
