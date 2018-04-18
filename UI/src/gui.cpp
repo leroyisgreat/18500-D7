@@ -88,8 +88,6 @@ void Gui::on_mode_change(CameraMode mode) {
     case CameraMode::HDR:
       l3_stack.set_visible_child(l4_options_HDR);
       hdr();
-      cv::Mat image = imread("../hdr/output.png", CV_LOAD_IMAGE_COLOR);
-      l3_viewfinder.set_frame(image);
       break;
     default:
       std::cerr << "Error unknown camera mode enterred" << std::endl;
@@ -156,5 +154,7 @@ void Gui::set_current_mode(CameraMode mode) {
 void Gui::hdr() {
   FILE* file = fopen("~/workspace/18500-D7/hdr/runhdrpi.py", "r");
   PyRun_SimpleFile(file, "~/workspace/18500-D7/hdr/runhdrpi.py");
+  cv::Mat image = cv::imread("../hdr/output.png", CV_LOAD_IMAGE_COLOR);
+  l3_viewfinder.set_frame(image);
 }
 
