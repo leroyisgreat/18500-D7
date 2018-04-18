@@ -119,7 +119,7 @@ void Gui::on_save() {
 
 void Gui::populate_toolbar() {
   // create the photo capture button
-  auto pc_image = new Gtk::Image("resources/shoot.ico");
+  auto pc_image = new Gtk::Image("/home/pi/workspace/18500-D7/UI/resources/shoot.ico");
   auto pc_button = new Gtk::ToolButton(*pc_image, "shoot");
   pc_button->set_tooltip_text("Take photo");
   // link photo capture button to function
@@ -129,7 +129,7 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*pc_button);
 
   // create the photo capture button
-  auto live_image = new Gtk::Image("resources/live.ico");
+  auto live_image = new Gtk::Image("/home/pi/workspace/18500-D7/UI/resources/live.ico");
   auto live_button = new Gtk::ToolButton(*live_image, "live");
   live_button->set_tooltip_text("Continuous Shooting");
   // link photo capture button to change camera mode 
@@ -139,7 +139,7 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*live_button);
 
   // create the HDR mode button
-  auto hdr_image = new Gtk::Image("resources/hdr.ico");
+  auto hdr_image = new Gtk::Image("/home/pi/workspace/18500-D7/UI/resources/hdr.ico");
   auto hdr_button = new Gtk::ToolButton(*hdr_image, "hdr");
   hdr_button->set_tooltip_text("Toggle HDR mode");
   hdr_button->signal_clicked().connect(sigc::bind<CameraMode>(
