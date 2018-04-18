@@ -95,6 +95,7 @@ void Gui::on_mode_change(CameraMode mode) {
 }
 
 void Gui::on_exposure_change() {
+  std::cout << "Changing Exposure..." << std::endl;
   l3_viewfinder.set_property(
       CV_CAP_PROP_AUTO_EXPOSURE,0);
   l3_viewfinder.set_property(
@@ -102,6 +103,7 @@ void Gui::on_exposure_change() {
 }
 
 void Gui::on_iso_change() {
+  std::cout << "Changing ISO..." << std::endl;
   l3_viewfinder.set_property(
       CV_CAP_PROP_GAIN, iso.get_value_as_int());
 }
@@ -154,7 +156,7 @@ void Gui::set_current_mode(CameraMode mode) {
 void Gui::hdr() {
   FILE* file = fopen("~/workspace/18500-D7/hdr/runhdrpi.py", "r");
   PyRun_SimpleFile(file, "~/workspace/18500-D7/hdr/runhdrpi.py");
-  cv::Mat image = cv::imread("../hdr/output.png", CV_LOAD_IMAGE_COLOR);
+  cv::Mat image = cv::imread("~/workspace/18500-D7/hdr/output.jpg", CV_LOAD_IMAGE_COLOR);
   l3_viewfinder.set_frame(image);
 }
 
