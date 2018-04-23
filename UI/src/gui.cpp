@@ -241,6 +241,11 @@ void Gui::hdr() {
 
 void Gui::gallery() {
   print("Populating Gallery...");
+
+  if(!boost::filesystem::exists(IMG_SAVE_PATH) || 
+     !boost::filesystem::is_directory(IMG_SAVE_PATH))
+    error("gallery path error","Error when populating gallery");
+
   boost::filesystem::recursive_directory_iterator it(IMG_SAVE_PATH);
   boost::filesystem::recursive_directory_iterator endit;
 
