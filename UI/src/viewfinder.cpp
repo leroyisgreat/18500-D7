@@ -198,6 +198,7 @@ void Viewfinder::set_frame(cv::Mat frame) {
 }
 
 void Viewfinder::initialize_camera() {
+  print("Initializing Camera");
 #if defined RPI
   if (!camera.open()) {
     // Camera didn't successfully open.
@@ -214,5 +215,6 @@ void Viewfinder::initialize_camera() {
 }
 
 void Viewfinder::uninitialize_camera() {
+  print("Uninitializing Camera");
   camera.release();
 }
