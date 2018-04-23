@@ -57,16 +57,13 @@ Gui::Gui()
   l3_stack.add(l4_options_HDR, "HDR options");
 
   l3_stack.set_visible_child(l4_options_CONTINUOUS);
-
-  // setup Python environment
-  Py_Initialize();
   
   show_all_children();
   std::cout << "GUI Setup finished." << std::endl;
 }
 
 Gui::~Gui() {
-  Py_Finalize();
+  //Py_Finalize();
 }
 
 void Gui::on_mode_change(CameraMode mode) {
@@ -155,10 +152,13 @@ void Gui::set_current_mode(CameraMode mode) {
 
 void Gui::hdr() {
   l3_viewfinder.uninitialize_camera();
+  // setup Python environment
+  Py_Initialize();
   FILE* file = fopen("/home/pi/workspace/18500-D7/hdr/runhdrpi.py", "r");
   PyRun_SimpleString("import sys");
   PyRun_SimpleString("sys.path.append('/home/pi/workspace/18500-D7/hdr/')");
   PyRun_SimpleFile(file, "/home/pi/workspace/18500-D7/hdr/runhdrpi.py");
+  Py_Finalize();
   cv::Mat image = cv::imread("/home/pi/workspace/18500-D7/hdr/output.jpg", CV_LOAD_IMAGE_COLOR);
   l3_viewfinder.initialize_camera();
   l3_viewfinder.set_frame(image);
