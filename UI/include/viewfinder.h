@@ -121,6 +121,15 @@ private:
    * 33 -> 30 FPS
    */
   const int FRAMERATE_INTERVAL = 50;
+
+  /** 
+   * @brief simple function to preface prints with more information
+   *
+   * @param input information string to be printed
+   */
+  inline void print(const char *input) {
+    std::cout << "VIEWFINDER: " << input << std::endl;
+  }
 };
 
 #endif // VIEWFINDER_H

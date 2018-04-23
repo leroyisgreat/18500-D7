@@ -57,7 +57,7 @@ Gui::Gui()
   l3_stack.add(l4_options_HDR, "HDR options");
 
   l3_stack.set_visible_child(l4_options_CONTINUOUS);
-  
+
   show_all_children();
   std::cout << "GUI Setup finished." << std::endl;
 }
@@ -151,16 +151,34 @@ void Gui::set_current_mode(CameraMode mode) {
 }
 
 void Gui::hdr() {
+  // let go of the camera to allow python script to take control
   l3_viewfinder.uninitialize_camera();
+
+  // set a test pattern to the viewfinder
+  cv::Mat image1 = cv::imread("/home/pi/workspace/18500-D7/UI/resources/testcard.svg");
+  l3_viewfinder.set_frame(image1);
+
   // setup Python environment
   Py_Initialize();
-  FILE* file = fopen("/home/pi/workspace/18500-D7/hdr/runhdrpi.py", "r");
+  // append script folder to PATH so imports work properly
   PyRun_SimpleString("import sys");
   PyRun_SimpleString("sys.path.append('/home/pi/workspace/18500-D7/hdr/')");
+  // change working directory so calls and file operations work properly
+  PyRun_SimpleString("import os");
+  PyRun_SimpleString("os.chdir('/home/pi/workspace/18500-D7/hdr/')");
+
+  // run the script
+  FILE* file = fopen("/home/pi/workspace/18500-D7/hdr/runhdrpi.py", "r");
   PyRun_SimpleFile(file, "/home/pi/workspace/18500-D7/hdr/runhdrpi.py");
+
+  // destroy Python environment
   Py_Finalize();
-  cv::Mat image = cv::imread("/home/pi/workspace/18500-D7/hdr/output.jpg", CV_LOAD_IMAGE_COLOR);
+
+  // get the result back and dsiplay
+  cv::Mat image2 = cv::imread("/home/pi/workspace/18500-D7/hdr/output.jpg");
+  l3_viewfinder.set_frame(image2);
+
+  // re-take camera
   l3_viewfinder.initialize_camera();
-  l3_viewfinder.set_frame(image);
 }
 

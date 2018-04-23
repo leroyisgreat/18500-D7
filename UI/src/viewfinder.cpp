@@ -16,7 +16,7 @@
 
 Viewfinder::Viewfinder() {
   // open camera
-  std::cout << "Opening Camera..." << std::endl;
+  print("Opening Camera...");
 #if defined RPI
   initialize_camera();
   if (!camera.isOpened()) {
@@ -32,7 +32,7 @@ Viewfinder::Viewfinder() {
 #endif
   } else {
     // Waiting for camera to "stabalize"
-    std::cout << "Sleeping for 3 seconds..." << std::endl;
+    print("Sleeping for 3 seconds...");
     sleep(3);
     // Camera opened successfully
     //
@@ -42,7 +42,7 @@ Viewfinder::Viewfinder() {
         sigc::mem_fun(*this, &Viewfinder::on_timeout), FRAMERATE_INTERVAL);
   }
   current_mode = CameraMode::CONTINUOUS;
-  std::cout << "Setup finished." << std::endl;
+  print("Setup finished.");
 }
 
 Viewfinder::~Viewfinder() {
@@ -62,21 +62,29 @@ bool Viewfinder::on_timeout() {
 }
 
 bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
-	if (!camera.isOpened()) return false;
- 
 	cv::Mat cv_frame, cv_frame1;
 
   camera.grab();
   if (current_mode == CONTINUOUS) {
+    if (!camera.isOpened()) {
+      print("Viewfinder in continuous mode, but camera not opened");
+      return false;
+    }
     // if the current mode is continuous, operate as video playback
     camera.retrieve(cv_frame);
   } else {
     // else show the latest image taken
-    if (!captures.empty())
-      cv_frame = captures.back();
+    if (captures.empty()) {
+      print("Viewfinder not in continuous mode, but captures is empty");
+      return false;
+    }
+    cv_frame = captures.back();
   }
  
-	if (cv_frame.empty()) return false;
+	if (cv_frame.empty()) {
+    print("Frame empty");
+    return false;
+  }
  
   // apply a threshold to the frame
 	cv::cvtColor (cv_frame, cv_frame1, CV_BGR2RGB);
