@@ -144,6 +144,10 @@ void Gui::on_off() {
 
 void Gui::on_next_gallery() {
   const char* top_file = *saved_files.begin();
+  std::stringstream ss;
+  ss << "Switching gallery to file: ";
+  ss << top_file;
+  print(ss.str().c_str());
   saved_files.push_back(top_file);
 
   cv::Mat image = cv::imread(top_file);
@@ -249,7 +253,7 @@ void Gui::gallery() {
   boost::filesystem::recursive_directory_iterator it(IMG_SAVE_PATH);
   boost::filesystem::recursive_directory_iterator endit;
 
-  const std::string ext("png");
+  const std::string ext(".jpg");
 
   saved_files.clear();
 
