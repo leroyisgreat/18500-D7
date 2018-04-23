@@ -40,3 +40,8 @@ raspicam/
 
 # images left over from running python scripts
 hdr/*.jpg
+panorama/*.jpg
+stabilization/*.jpg
+
+# all saved images
+saves/
