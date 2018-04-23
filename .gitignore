@@ -37,5 +37,6 @@
 # separate Git repo for a good C++ Raspberry Pi Camera API:
 # https://github.com/cedricve/raspicam
 raspicam/
-# idk why I have this folder
-UI/scraps/
+
+# images left over from running python scripts
+hdr/*.jpg

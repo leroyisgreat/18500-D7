@@ -33,3 +33,5 @@ if __name__=="__main__":
     imgname = 'ouptupt.jpg'
     MergeHDRStack(imgname)
     f.write('Merged HDR Stack.\n')
+
+    camera.close()
