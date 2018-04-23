@@ -58,12 +58,21 @@ Gui::Gui()
 
   l3_stack.set_visible_child(l4_options_CONTINUOUS);
 
+  // Initializing Python environment
+  print("Initializing Python environment");
+  Py_Initialize();
+  PyRun_SimpleString("import os");
+  PyRun_SimpleString("import sys");
+  // append script folder to PATH so imports work properly
+  PyRun_SimpleString("sys.path.append('/home/pi/workspace/18500-D7/hdr/')");
+
   show_all_children();
   print("Setup finished.");
 }
 
 Gui::~Gui() {
-  //Py_Finalize();
+  // destroy Python environment
+  Py_Finalize();
 }
 
 void Gui::on_mode_change(CameraMode mode) {
@@ -151,33 +160,19 @@ void Gui::set_current_mode(CameraMode mode) {
 }
 
 void Gui::hdr() {
-  // set a test pattern to the viewfinder
-  cv::Mat image1 = cv::imread("/home/pi/workspace/18500-D7/UI/resources/testcard.svg");
-  l3_viewfinder.set_frame(image1);
-
   // let go of the camera to allow python script to take control
   l3_viewfinder.uninitialize_camera();
 
-  // setup Python environment
-  Py_Initialize();
-  // append script folder to PATH so imports work properly
-  PyRun_SimpleString("import sys");
-  PyRun_SimpleString("sys.path.append('/home/pi/workspace/18500-D7/hdr/')");
-  // change working directory so calls and file operations work properly
-  PyRun_SimpleString("import os");
-  PyRun_SimpleString("os.chdir('/home/pi/workspace/18500-D7/hdr/')");
-
   // run the script
   FILE* file = fopen("/home/pi/workspace/18500-D7/hdr/runhdrpi.py", "r");
+  // change working directory so calls and file operations work properly
+  PyRun_SimpleString("os.chdir('/home/pi/workspace/18500-D7/hdr/')");
   PyRun_SimpleFile(file, "/home/pi/workspace/18500-D7/hdr/runhdrpi.py");
   fclose(file);
 
-  // destroy Python environment
-  Py_Finalize();
-
   // get the result back and dsiplay
-  cv::Mat image2 = cv::imread("/home/pi/workspace/18500-D7/hdr/output.jpg");
-  l3_viewfinder.set_frame(image2);
+  cv::Mat image = cv::imread("/home/pi/workspace/18500-D7/hdr/output.jpg");
+  l3_viewfinder.set_frame(image);
 
   // re-take camera
   l3_viewfinder.initialize_camera();
