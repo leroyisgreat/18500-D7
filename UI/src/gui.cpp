@@ -46,17 +46,17 @@ Gui::Gui()
   l3_stack.add(l4_options_CONTINUOUS, "continuous options");
 
   l3_stack.add(l4_options_SINGLE_CAPTURE, "single capture options");
-  l4_options_SINGLE_CAPTURE.pack_start(save_SC, false, false);
-  l4_options_SINGLE_CAPTURE.pack_start(exposure_label, false, false);
-  l4_options_SINGLE_CAPTURE.pack_start(exposure, false, false);
-  l4_options_SINGLE_CAPTURE.pack_start(iso_label, false, false);
-  l4_options_SINGLE_CAPTURE.pack_start(iso, false, false);
+  l4_options_SINGLE_CAPTURE.pack_start(save_SC);
+  l4_options_SINGLE_CAPTURE.pack_start(exposure_label);
+  l4_options_SINGLE_CAPTURE.pack_start(exposure);
+  l4_options_SINGLE_CAPTURE.pack_start(iso_label);
+  l4_options_SINGLE_CAPTURE.pack_start(iso);
   save_SC.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
   exposure.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_exposure_change));
   iso.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_iso_change));
 
   l3_stack.add(l4_options_HDR, "HDR options");
-  l4_options_SINGLE_CAPTURE.pack_start(save_HDR, false, false);
+  l4_options_SINGLE_CAPTURE.pack_start(save_HDR);
   save_HDR.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
 
   l3_stack.set_visible_child(l4_options_CONTINUOUS);
