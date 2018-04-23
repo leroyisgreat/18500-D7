@@ -16,7 +16,6 @@
 
 Viewfinder::Viewfinder() {
   // open camera
-  print("Opening Camera...");
 #if defined RPI
   initialize_camera();
   if (!camera.isOpened()) {
@@ -66,25 +65,20 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 
   camera.grab();
   if (current_mode == CONTINUOUS) {
-    if (!camera.isOpened()) {
-      print("Viewfinder in continuous mode, but camera not opened");
-      return false;
-    }
+    if (!camera.isOpened()) 
+      error("camera unopened", "Viewfinder in continuous mode, but camera not opened");
     // if the current mode is continuous, operate as video playback
     camera.retrieve(cv_frame);
   } else {
     // else show the latest image taken
-    if (captures.empty()) {
-      print("Viewfinder not in continuous mode, but captures is empty");
-      return false;
-    }
+    if (captures.empty())
+      error("captures empty", 
+            "Viewfinder attempting to get a frame from captures, but container is empty");
     cv_frame = captures.back();
   }
  
-	if (cv_frame.empty()) {
-    print("Frame empty");
-    return false;
-  }
+	if (cv_frame.empty())
+    error("frame empty", "Viewfinder currently displaying frame is empty");
  
   // apply a threshold to the frame
 	cv::cvtColor (cv_frame, cv_frame1, CV_BGR2RGB);
@@ -177,6 +171,7 @@ void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
 }
 
 cv::Mat Viewfinder::get_frame(bool fresh) {
+  print("Manually getting a frame");
   if (fresh) {
     cv::Mat frame;
     camera.grab();
@@ -185,12 +180,15 @@ cv::Mat Viewfinder::get_frame(bool fresh) {
   }
 
   // if there are no frames, throw exception
-  if (captures.empty()) throw "no frames on captures vector";
+  if (captures.empty()) 
+    error("captures empty", 
+          "Viewfinder attempting to get a frame from captures, but container is empty");
 
   return captures.back().clone();
 }
 
 void Viewfinder::set_frame(cv::Mat frame) {
+  print("Manually setting frame");
   // for now, there is only a need to store one element, but it is expected that
   // this will change
   captures.clear();

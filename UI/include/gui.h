@@ -71,7 +71,7 @@ private:
   Gtk::Box                      l4_options_CONTINUOUS;
   Gtk::Box                      l4_options_SINGLE_CAPTURE;
   Gtk::Box                      l4_options_HDR;
-  Gtk::Button                   save;
+  Gtk::Button                   save_SC, save_HDR;
   Glib::RefPtr<Gtk::Adjustment> adjustment_exposure, adjustment_iso;
   Gtk::SpinButton               exposure, iso;
   Gtk::Label                    exposure_label, iso_label;

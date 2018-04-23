@@ -13,7 +13,8 @@ Gui::Gui()
   l4_options_CONTINUOUS(    Gtk::ORIENTATION_VERTICAL,  4),
   l4_options_SINGLE_CAPTURE(Gtk::ORIENTATION_VERTICAL,  4),
   l4_options_HDR(           Gtk::ORIENTATION_VERTICAL,  4),
-  save("Save"),
+  save_SC("Save - SINGLE_CAPTURE"),
+  save_HDR("Save - HDR"),
   adjustment_exposure(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
   adjustment_iso(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
   exposure(adjustment_exposure),
@@ -45,16 +46,18 @@ Gui::Gui()
   l3_stack.add(l4_options_CONTINUOUS, "continuous options");
 
   l3_stack.add(l4_options_SINGLE_CAPTURE, "single capture options");
-  l4_options_SINGLE_CAPTURE.pack_start(save, false, false);
+  l4_options_SINGLE_CAPTURE.pack_start(save_SC, false, false);
   l4_options_SINGLE_CAPTURE.pack_start(exposure_label, false, false);
   l4_options_SINGLE_CAPTURE.pack_start(exposure, false, false);
   l4_options_SINGLE_CAPTURE.pack_start(iso_label, false, false);
   l4_options_SINGLE_CAPTURE.pack_start(iso, false, false);
-  save.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
+  save_SC.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
   exposure.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_exposure_change));
   iso.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_iso_change));
 
   l3_stack.add(l4_options_HDR, "HDR options");
+  l4_options_SINGLE_CAPTURE.pack_start(save_HDR, false, false);
+  save_HDR.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
 
   l3_stack.set_visible_child(l4_options_CONTINUOUS);
 

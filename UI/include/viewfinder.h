@@ -99,6 +99,28 @@ private:
   void draw_hud(const Cairo::RefPtr<Cairo::Context> &cr, 
                 int scaled_width, int scaled_height);
 
+  /** 
+   * @brief simple function to preface prints with more information
+   *
+   * @param input information string to be printed
+   */
+  inline void print(const char *input) {
+    std::cout << "VIEWFINDER: " << input << std::endl;
+  }
+
+  /** 
+   * @brief simple function to easily throw meaningful errors
+   *
+   * @param info information string to be printed
+   * @param err exception to be thrown
+   */
+  inline void error(const char *err, const char *info) {
+    std::cout << "[E] VIEWFINDER: " << info << std::endl;
+    std::string error_str("VIEWFINDER: ");
+    error_str += err;
+    throw std::runtime_error(error_str);
+  }
+
   /** @brief current mode the camera is in - determines HUD elements */
   CameraMode current_mode;
 
@@ -121,15 +143,6 @@ private:
    * 33 -> 30 FPS
    */
   const int FRAMERATE_INTERVAL = 50;
-
-  /** 
-   * @brief simple function to preface prints with more information
-   *
-   * @param input information string to be printed
-   */
-  inline void print(const char *input) {
-    std::cout << "VIEWFINDER: " << input << std::endl;
-  }
 };
 
 #endif // VIEWFINDER_H
