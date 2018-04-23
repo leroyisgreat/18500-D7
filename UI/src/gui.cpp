@@ -239,6 +239,7 @@ void Gui::hdr() {
 }
 
 void Gui::gallery() {
+  print("Populating Gallery...");
   boost::filesystem::recursive_directory_iterator it(IMG_SAVE_PATH);
   boost::filesystem::recursive_directory_iterator endit;
 
@@ -255,5 +256,9 @@ void Gui::gallery() {
     }
     ++it;
   }
+  std::stringstream ss;
+  ss << saved_files.size();
+  ss << " images found.";
+  print(ss.str().c_str());
 }
 
