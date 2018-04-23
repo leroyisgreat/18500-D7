@@ -32,7 +32,7 @@
 #ifndef GUI_H 
 #define GUI_H
 
-#include "camera_state.h"
+#include "camera_mode.h"
 #include <gtkmm.h>
 #include "viewfinder.h"
 
@@ -43,14 +43,14 @@ public:
 
 private:
   // Signal handlers:
-  void on_state_change(CameraState state);
+  void on_mode_change(CameraMode mode);
   void on_exposure_change();
   void on_iso_change();
   void on_save();
 
   // regular functions
   void populate_toolbar();
-  void set_current_state(CameraState state);
+  void set_current_mode(CameraMode mode);
   void hdr();
 
   // Child widgets:
@@ -67,8 +67,8 @@ private:
   Gtk::SpinButton               exposure, iso;
   Gtk::Label                    exposure_label, iso_label;
 
-	// camera state information:
-	CameraState current_state;
+	// camera Mode information:
+	CameraMode current_mode;
 };
 
 #endif // GUI_H

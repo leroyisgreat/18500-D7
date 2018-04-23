@@ -31,5 +31,5 @@ if __name__=="__main__":
     f.write('Captured HDR Stack.\n')
     # Merge them into an HDR image
     imgname = 'ouptupt.jpg'
-    MergeHDRStack(images, imgname)
+    MergeHDRStack(imgname)
     f.write('Merged HDR Stack.\n')

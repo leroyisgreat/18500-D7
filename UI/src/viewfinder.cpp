@@ -7,7 +7,6 @@
  * @author  LeRoy Gary <lgary@andrew.cmu.edu>
  */
 
-#include "camera_state.h"
 #include "gui.h"
 #include "viewfinder.h"
 #include <cairomm/context.h>
@@ -18,10 +17,19 @@
 Viewfinder::Viewfinder() {
   // open camera
   std::cout << "Opening Camera..." << std::endl;
-  if (!camera.open(0)) {
+#if defined RPI
+  initialize_camera();
+  if (!camera.isOpened()) {
     // Camera didn't successfully open.
     std::cerr << "Opening Camera failed." << std::endl; 
     std::cerr << "Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?" << std::endl;
+#elif defined V4L2
+  if (!camera.isOpened(0)) {
+    // Camera didn't successfully open.
+    std::cerr << "Opening Camera failed." << std::endl; 
+#else
+  if (false) {
+#endif
   } else {
     // Waiting for camera to "stabalize"
     std::cout << "Sleeping for 3 seconds..." << std::endl;
@@ -33,7 +41,7 @@ Viewfinder::Viewfinder() {
     Glib::signal_timeout().connect(
         sigc::mem_fun(*this, &Viewfinder::on_timeout), FRAMERATE_INTERVAL);
   }
-  current_state = CameraState::CONTINUOUS;
+  current_mode = CameraMode::CONTINUOUS;
   std::cout << "Setup finished." << std::endl;
 }
 
@@ -59,7 +67,7 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	cv::Mat cv_frame, cv_frame1;
 
   camera.grab();
-  if (current_state == CONTINUOUS) {
+  if (current_mode == CONTINUOUS) {
     // if the current mode is continuous, operate as video playback
     camera.retrieve(cv_frame);
   } else {
@@ -133,14 +141,14 @@ void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
   cr->restore();
 
   Glib::RefPtr<Pango::Layout> layout;
-  switch (current_state) {
-    case CameraState::CONTINUOUS:
+  switch (current_mode) {
+    case CameraMode::CONTINUOUS:
       layout = create_pango_layout("LIVE");
       break;
-    case CameraState::SINGLE_CAPTURE:
+    case CameraMode::SINGLE_CAPTURE:
       layout = create_pango_layout("ONE SHOT");
       break;
-    case CameraState::HDR:
+    case CameraMode::HDR:
       layout = create_pango_layout("HDR");
       break;
     default:
@@ -179,4 +187,24 @@ void Viewfinder::set_frame(cv::Mat frame) {
   // this will change
   captures.clear();
   captures.push_back(frame);
+}
+
+void Viewfinder::initialize_camera() {
+#if defined RPI
+  if (!camera.open()) {
+    // Camera didn't successfully open.
+    std::cerr << "Opening Camera failed." << std::endl; 
+    std::cerr << "Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?" << std::endl;
+#elif defined V4L2
+  if (!camera.open(0)) {
+    // Camera didn't successfully open.
+    std::cerr << "Opening Camera failed." << std::endl; 
+#else
+  if (false) {
+#endif
+  }
+}
+
+void Viewfinder::uninitialize_camera() {
+  camera.release();
 }

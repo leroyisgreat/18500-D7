@@ -10,12 +10,12 @@
 // this #define is for changing the type of the camera easily
 // for the Raspberry Pi Camera: #define RPI
 // for the standard V4L2 Camera: #define V4L2
-#define V4L2
+#define RPI
 
 #ifndef VIEWFINDER_H
 #define VIEWFINDER_H
 
-#include "camera_state.h"
+#include "camera_mode.h"
 #include <gtkmm/drawingarea.h>
 #include <opencv2/opencv.hpp>
 #include <raspicam/raspicam_cv.h>
@@ -29,18 +29,18 @@ public:
   /** @brief generic destructor - cleans up camera device handle */
 	virtual ~Viewfinder();
 
-  /** @brief setter for camera state
+  /** @brief setter for camera mode
    *
-   * There wasn't an easy way to propogate the state between the GUI and the
+   * There wasn't an easy way to propogate the mode between the GUI and the
    * viewfinder. From a design persepctive, the GUI should be the only object
    * holding this information, but it didn't make sense to have the viewfinder
    * have access to the object that created it. This was a less-than-elegant
    * solution.
    *
-   * @param state target state to put the viewfinder into
+   * @param mode target mode to put the viewfinder into
    */
-	inline void set_camera_state(CameraState state) {
-		current_state = state;
+	inline void set_camera_mode(CameraMode mode) {
+		current_mode = mode;
 	}
 
   /** @brief getter for the camera device frame
@@ -54,9 +54,9 @@ public:
 
   /** @brief setter for the camera device frame
    *
-   * if the current_state is CONTINUOUS, then this is mostly useless
-   * TODO: Consider failing if the camera state is in CONTINUOUS
-   * if the current_state is something else, then this accesses the top of the
+   * if the current_mode is CONTINUOUS, then this is mostly useless
+   * TODO: Consider failing if the camera mode is in CONTINUOUS
+   * if the current_mode is something else, then this accesses the top of the
    * captures vector, which should be the frame currently being displayed in the
    * viewfinder
    *
@@ -72,6 +72,9 @@ public:
   inline void set_property(int propId, double value) {
       camera.set(propId, value);
   }
+
+  void initialize_camera();
+  void uninitialize_camera();
 
 private:
   /** @brief timeout function called at FRAMERATE_INTERVAL to re-fetch a frame
@@ -96,8 +99,8 @@ private:
   void draw_hud(const Cairo::RefPtr<Cairo::Context> &cr, 
                 int scaled_width, int scaled_height);
 
-  /** @brief current state the camera is in - determines HUD elements */
-  CameraState current_state;
+  /** @brief current mode the camera is in - determines HUD elements */
+  CameraMode current_mode;
 
   /** @brief vector of frames recently captures - usually contains last capture
    * taken */
