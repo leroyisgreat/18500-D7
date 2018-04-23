@@ -13,7 +13,10 @@
 enum CameraMode {
   CONTINUOUS,
   SINGLE_CAPTURE,
-	HDR
+	HDR,
+  PANORAMA,
+  STABILIZE,
+  GALLERY
 };
 
 #endif // CAMERA_MODE_H

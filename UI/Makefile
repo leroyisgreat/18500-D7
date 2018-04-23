@@ -3,7 +3,7 @@ MKDIR_P = mkdir -p
 
 CXX    = g++
 CFLAGS = -c -Wall -Iinclude `pkg-config --cflags gtkmm-3.0 opencv` -lpython2.7
-LFLAGS = `pkg-config --libs gtkmm-3.0 opencv` -lraspicam_cv -lpython2.7
+LFLAGS = `pkg-config --libs gtkmm-3.0 opencv` -lraspicam_cv -lpython2.7 -lboost_system -lboost_filesystem
 
 SRCDIR = src
 OBJDIR = obj

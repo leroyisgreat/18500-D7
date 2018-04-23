@@ -47,11 +47,14 @@ private:
   void on_exposure_change();
   void on_iso_change();
   void on_save();
+  void on_next_gallery();
+  void on_off();
 
   // regular functions
   void populate_toolbar();
   void set_current_mode(CameraMode mode);
   void hdr();
+  void gallery();
 
   /** 
    * @brief simple function to preface prints with more information
@@ -60,6 +63,19 @@ private:
    */
   inline void print(const char *input) {
     std::cout << "GUI: " << input << std::endl;
+  }
+
+  /** 
+   * @brief simple function to easily throw meaningful errors
+   *
+   * @param info information string to be printed
+   * @param err exception to be thrown
+   */
+  inline void error(const char *err, const char *info) {
+    std::cout << "[E] GUI: " << info << std::endl;
+    std::string error_str("GUI: ");
+    error_str += err;
+    throw std::runtime_error(error_str);
   }
 
   // Child widgets:
@@ -71,7 +87,9 @@ private:
   Gtk::Box                      l4_options_CONTINUOUS;
   Gtk::Box                      l4_options_SINGLE_CAPTURE;
   Gtk::Box                      l4_options_HDR;
+  Gtk::Box                      l4_options_GALLERY;
   Gtk::Button                   save_SC, save_HDR;
+  Gtk::Button                   next_G;
   Glib::RefPtr<Gtk::Adjustment> adjustment_exposure, adjustment_iso;
   Gtk::SpinButton               exposure, iso;
   Gtk::Label                    exposure_label, iso_label;
@@ -84,6 +102,8 @@ private:
 
   /** @brief location of all manually saved images */
   const std::string IMG_SAVE_PATH = "/home/pi/workspace/18500-D7/saves/";
+
+  std::vector<const char*> saved_files;
 };
 
 #endif // GUI_H

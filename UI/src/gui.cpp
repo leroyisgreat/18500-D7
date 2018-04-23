@@ -6,6 +6,7 @@
 #include <gdk/gdkx.h>
 #include <opencv2/opencv.hpp>
 #include <python2.7/Python.h>
+#include "boost/filesystem.hpp"
 
 Gui::Gui()
 : l1_box(                   Gtk::ORIENTATION_VERTICAL,  4),
@@ -13,8 +14,9 @@ Gui::Gui()
   l4_options_CONTINUOUS(    Gtk::ORIENTATION_VERTICAL,  4),
   l4_options_SINGLE_CAPTURE(Gtk::ORIENTATION_VERTICAL,  4),
   l4_options_HDR(           Gtk::ORIENTATION_VERTICAL,  4),
-  save_SC("Save - SINGLE_CAPTURE"),
-  save_HDR("Save - HDR"),
+  save_SC("Save"),
+  save_HDR("Save"),
+  next_G("Next Image"),
   adjustment_exposure(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
   adjustment_iso(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
   exposure(adjustment_exposure),
@@ -59,6 +61,10 @@ Gui::Gui()
   l4_options_HDR.pack_start(save_HDR);
   save_HDR.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
 
+  l3_stack.add(l4_options_GALLERY, "Gallery options");
+  l4_options_GALLERY.pack_start(next_G);
+  next_G.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_next_gallery));
+
   l3_stack.set_visible_child(l4_options_CONTINUOUS);
 
   // Initializing Python environment
@@ -98,8 +104,12 @@ void Gui::on_mode_change(CameraMode mode) {
       l3_stack.set_visible_child(l4_options_HDR);
       hdr();
       break;
+    case CameraMode::GALLERY:
+      l3_stack.set_visible_child(l4_options_GALLERY);
+      gallery();
+      break;
     default:
-      std::cerr << "Error unknown camera mode enterred" << std::endl;
+      error("unknown CameraMode", "GUI entered unknown camera mode in on_mode_change()");
   }
 }
 
@@ -125,6 +135,18 @@ void Gui::on_save() {
   cv::Mat frame = l3_viewfinder.get_frame();
   cv::imwrite(ss.str().c_str(), frame);
   Gui::on_mode_change(CameraMode::CONTINUOUS);
+}
+
+void Gui::on_off() {
+  Gtk::Main::quit();
+}
+
+void Gui::on_next_gallery() {
+  const char* top_file = *saved_files.begin();
+  saved_files.push_back(top_file);
+
+  cv::Mat image = cv::imread(top_file);
+  l3_viewfinder.set_frame(image);
 }
 
 void Gui::populate_toolbar() {
@@ -156,6 +178,40 @@ void Gui::populate_toolbar() {
       sigc::mem_fun(*this, &Gui::on_mode_change),
       CameraMode::HDR));
   l2_toolbar.append(*hdr_button);
+
+  // create the Panorama mode button
+  auto panorama_image = new Gtk::Image(IMG_RESOURCE_PATH + "panorama.ico");
+  auto panorama_button = new Gtk::ToolButton(*panorama_image, "panorama");
+  panorama_button->set_tooltip_text("Toggle Panorama mode");
+  panorama_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::PANORAMA));
+  l2_toolbar.append(*panorama_button);
+
+  // create the Stabilize mode button
+  auto stabilize_image = new Gtk::Image(IMG_RESOURCE_PATH + "stabilize.ico");
+  auto stabilize_button = new Gtk::ToolButton(*stabilize_image, "stabilize");
+  stabilize_button->set_tooltip_text("Toggle Image Stabilization mode");
+  stabilize_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::STABILIZE));
+  l2_toolbar.append(*stabilize_button);
+
+  // create the gallery button
+  auto gallery_image = new Gtk::Image(IMG_RESOURCE_PATH + "gallery.ico");
+  auto gallery_button = new Gtk::ToolButton(*gallery_image, "gallery");
+  gallery_button->set_tooltip_text("Toggle Gallery mode");
+  gallery_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::GALLERY));
+  l2_toolbar.append(*gallery_button);
+
+  // create the OFF button
+  auto off_image = new Gtk::Image(IMG_RESOURCE_PATH + "off.ico");
+  auto off_button = new Gtk::ToolButton(*off_image, "off");
+  off_button->set_tooltip_text("Turn camera OFF");
+  off_button->signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_off));
+  l2_toolbar.append(*off_button);
 }
 
 void Gui::set_current_mode(CameraMode mode) {
@@ -180,5 +236,24 @@ void Gui::hdr() {
 
   // re-take camera
   l3_viewfinder.initialize_camera();
+}
+
+void Gui::gallery() {
+  boost::filesystem::recursive_directory_iterator it(IMG_SAVE_PATH);
+  boost::filesystem::recursive_directory_iterator endit;
+
+  const std::string ext("png");
+
+  saved_files.clear();
+
+  std::string s;
+	while(it != endit) {
+    if(boost::filesystem::is_regular_file(*it) && it->path().extension() == ext) {
+      s = it->path().string();
+      const char* filename = s.c_str();
+      saved_files.push_back(filename);
+    }
+    ++it;
+  }
 }
 
