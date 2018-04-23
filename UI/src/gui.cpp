@@ -106,6 +106,7 @@ void Gui::on_mode_change(CameraMode mode) {
       break;
     case CameraMode::GALLERY:
       l3_stack.set_visible_child(l4_options_GALLERY);
+      l3_viewfinder.get_frame(true);
       gallery();
       break;
     default:
