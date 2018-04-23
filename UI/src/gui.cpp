@@ -59,7 +59,7 @@ Gui::Gui()
   l3_stack.set_visible_child(l4_options_CONTINUOUS);
 
   show_all_children();
-  std::cout << "GUI Setup finished." << std::endl;
+  print("Setup finished.");
 }
 
 Gui::~Gui() {
@@ -67,7 +67,7 @@ Gui::~Gui() {
 }
 
 void Gui::on_mode_change(CameraMode mode) {
-  std::cout << "Changing Camera mode" << std::endl;
+  print("Changing Camera mode");
 
   Gui::set_current_mode(mode);
   // viewfinder must be refreshed
@@ -92,7 +92,7 @@ void Gui::on_mode_change(CameraMode mode) {
 }
 
 void Gui::on_exposure_change() {
-  std::cout << "Changing Exposure..." << std::endl;
+  print("Changing Exposure...");
   l3_viewfinder.set_property(
       CV_CAP_PROP_AUTO_EXPOSURE,0);
   l3_viewfinder.set_property(
@@ -100,7 +100,7 @@ void Gui::on_exposure_change() {
 }
 
 void Gui::on_iso_change() {
-  std::cout << "Changing ISO..." << std::endl;
+  print("Changing ISO...");
   l3_viewfinder.set_property(
       CV_CAP_PROP_GAIN, iso.get_value_as_int());
 }
@@ -151,12 +151,12 @@ void Gui::set_current_mode(CameraMode mode) {
 }
 
 void Gui::hdr() {
-  // let go of the camera to allow python script to take control
-  l3_viewfinder.uninitialize_camera();
-
   // set a test pattern to the viewfinder
   cv::Mat image1 = cv::imread("/home/pi/workspace/18500-D7/UI/resources/testcard.svg");
   l3_viewfinder.set_frame(image1);
+
+  // let go of the camera to allow python script to take control
+  l3_viewfinder.uninitialize_camera();
 
   // setup Python environment
   Py_Initialize();
@@ -170,6 +170,7 @@ void Gui::hdr() {
   // run the script
   FILE* file = fopen("/home/pi/workspace/18500-D7/hdr/runhdrpi.py", "r");
   PyRun_SimpleFile(file, "/home/pi/workspace/18500-D7/hdr/runhdrpi.py");
+  fclose(file);
 
   // destroy Python environment
   Py_Finalize();

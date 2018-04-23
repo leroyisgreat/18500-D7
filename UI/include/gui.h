@@ -53,6 +53,15 @@ private:
   void set_current_mode(CameraMode mode);
   void hdr();
 
+  /** 
+   * @brief simple function to preface prints with more information
+   *
+   * @param input information string to be printed
+   */
+  inline void print(const char *input) {
+    std::cout << "GUI: " << input << std::endl;
+  }
+
   // Child widgets:
   Gtk::Box                      l1_box;
   Gtk::Box                      l2_box_top;
