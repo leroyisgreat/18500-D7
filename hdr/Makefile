@@ -8,3 +8,8 @@ OBJ = SerialHDR.o
 
 hellomake: $(OBJ)
 	$(CC) `pkg-config --libs --cflags opencv` -o $@ $^ $(CFLAGS)
+
+.PHONY: clean
+clean:
+	rm *.jpg
+

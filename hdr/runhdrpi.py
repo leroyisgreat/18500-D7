@@ -30,7 +30,7 @@ if __name__=="__main__":
     # WriteResponseFile(images)
     f.write('Captured HDR Stack.\n')
     # Merge them into an HDR image
-    imgname = 'ouptupt.jpg'
+    imgname = 'output.jpg'
     MergeHDRStack(imgname)
     f.write('Merged HDR Stack.\n')
 
