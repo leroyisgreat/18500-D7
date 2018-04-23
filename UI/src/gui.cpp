@@ -56,7 +56,7 @@ Gui::Gui()
   iso.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_iso_change));
 
   l3_stack.add(l4_options_HDR, "HDR options");
-  l4_options_SINGLE_CAPTURE.pack_start(save_HDR);
+  l4_options_HDR.pack_start(save_HDR);
   save_HDR.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
 
   l3_stack.set_visible_child(l4_options_CONTINUOUS);
@@ -119,6 +119,7 @@ void Gui::on_iso_change() {
 
 void Gui::on_save() {
   std::stringstream ss;
+  ss << IMG_SAVE_PATH;
   ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   ss << ".jpg";
   cv::Mat frame = l3_viewfinder.get_frame();
@@ -128,7 +129,7 @@ void Gui::on_save() {
 
 void Gui::populate_toolbar() {
   // create the photo capture button
-  auto pc_image = new Gtk::Image("/home/pi/workspace/18500-D7/UI/resources/shoot.ico");
+  auto pc_image = new Gtk::Image(IMG_RESOURCE_PATH + "shoot.ico");
   auto pc_button = new Gtk::ToolButton(*pc_image, "shoot");
   pc_button->set_tooltip_text("Take photo");
   // link photo capture button to function
@@ -138,7 +139,7 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*pc_button);
 
   // create the photo capture button
-  auto live_image = new Gtk::Image("/home/pi/workspace/18500-D7/UI/resources/live.ico");
+  auto live_image = new Gtk::Image(IMG_RESOURCE_PATH + "live.ico");
   auto live_button = new Gtk::ToolButton(*live_image, "live");
   live_button->set_tooltip_text("Continuous Shooting");
   // link photo capture button to change camera mode 
@@ -148,7 +149,7 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*live_button);
 
   // create the HDR mode button
-  auto hdr_image = new Gtk::Image("/home/pi/workspace/18500-D7/UI/resources/hdr.ico");
+  auto hdr_image = new Gtk::Image(IMG_RESOURCE_PATH + "hdr.ico");
   auto hdr_button = new Gtk::ToolButton(*hdr_image, "hdr");
   hdr_button->set_tooltip_text("Toggle HDR mode");
   hdr_button->signal_clicked().connect(sigc::bind<CameraMode>(

@@ -76,8 +76,14 @@ private:
   Gtk::SpinButton               exposure, iso;
   Gtk::Label                    exposure_label, iso_label;
 
-	// camera Mode information:
+	/** @brief camera Mode information */
 	CameraMode current_mode;
+
+  /** @brief location of all resource images */
+  const std::string IMG_RESOURCE_PATH = "/home/pi/workspace/18500-D7/UI/resources/";
+
+  /** @brief location of all manually saved images */
+  const std::string IMG_SAVE_PATH = "/home/pi/workspace/18500-D7/saves/";
 };
 
 #endif // GUI_H
