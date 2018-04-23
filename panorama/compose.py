@@ -8,10 +8,10 @@ import string
 # use wait to allow user to move camera at reasonable pace 
 # in between capturing images
 def take_photos(n, name):
-    
+    os.system("mkdir output")
     for i in range(0,n):
         os.system("ls -l") 
-        os.system("raspistill -vf -hf -o /home/pi/private/18500-D7/panorama/output/" + str(name) +  "_" + str(i) + ".jpg") # enter raspistill 
+        os.system("raspistill -vf -hf -o output/" + str(name) +  "_" + str(i) + ".jpg") # enter raspistill 
 
 
 
