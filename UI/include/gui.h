@@ -54,6 +54,7 @@ private:
   void populate_toolbar();
   void set_current_mode(CameraMode mode);
   void hdr();
+  void panorama();
   void gallery();
 
   /** 
@@ -87,6 +88,7 @@ private:
   Gtk::Box                      l4_options_CONTINUOUS;
   Gtk::Box                      l4_options_SINGLE_CAPTURE;
   Gtk::Box                      l4_options_HDR;
+  Gtk::Box                      l4_options_PANORAMA;
   Gtk::Box                      l4_options_GALLERY;
   Gtk::Button                   save_SC, save_HDR;
   Gtk::Button                   next_G;

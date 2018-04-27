@@ -13,7 +13,7 @@ DIRS   = $(EXEDIR) $(OBJDIR)
 
 _OBJ   = main.o gui.o viewfinder.o
 OBJ    = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
-_INC   = gui.h camera_mode.h camera_orientation.h viewfinder.h
+_INC   = gui.h camera_mode.h viewfinder_mode.h viewfinder.h
 INC    = $(patsubst %,$(INCDIR)/%,$(_INC))
 
 $(shell mkdir -p $(DIRS))

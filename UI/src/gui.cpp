@@ -104,6 +104,10 @@ void Gui::on_mode_change(CameraMode mode) {
       l3_stack.set_visible_child(l4_options_HDR);
       hdr();
       break;
+    case CameraMode::PANORAMA:
+      l3_stack.set_visible_child(l4_options_PANORAMA);
+      panorama();
+      break;
     case CameraMode::GALLERY:
       l3_stack.set_visible_child(l4_options_GALLERY);
       l3_viewfinder.get_frame(true);
@@ -221,7 +225,6 @@ void Gui::populate_toolbar() {
 
 void Gui::set_current_mode(CameraMode mode) {
   current_mode = mode;
-  l3_viewfinder.set_camera_mode(mode);
 }
 
 void Gui::hdr() {
@@ -243,6 +246,10 @@ void Gui::hdr() {
   l3_viewfinder.initialize_camera();
 }
 
+void Gui::panorama() {
+  return;
+}
+
 void Gui::gallery() {
   print("Populating Gallery...");
 
@@ -257,18 +264,22 @@ void Gui::gallery() {
 
   saved_files.clear();
 
+  std::stringstream ss;
   std::string s;
 	while(it != endit) {
     if(boost::filesystem::is_regular_file(*it) && it->path().extension() == ext) {
-      s = it->path().string();
+      s = it->path().filename().string();
       const char* filename = s.c_str();
+      ss << filename;
+      ss << " ";
       saved_files.push_back(filename);
     }
     ++it;
   }
-  std::stringstream ss;
+  ss << " -- ";
   ss << saved_files.size();
   ss << " images found.";
   print(ss.str().c_str());
 }
+
 

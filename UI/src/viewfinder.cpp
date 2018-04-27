@@ -9,6 +9,7 @@
 
 #include "gui.h"
 #include "viewfinder.h"
+#include "exceptions.h"
 #include <cairomm/context.h>
 #include <gdkmm/general.h> // set_source_pixbuf()
 #include <giomm/resource.h>
@@ -16,18 +17,13 @@
 
 Viewfinder::Viewfinder() {
   // open camera
-#if defined RPI
   initialize_camera();
   if (!camera.isOpened()) {
     // Camera didn't successfully open.
-    std::cerr << "Opening Camera failed." << std::endl; 
-    std::cerr << "Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?" << std::endl;
+#if defined RPI
+    error(VF_OPEN_FAIL, "Opening Camera failed. Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?");
 #elif defined V4L2
-  if (!camera.isOpened(0)) {
-    // Camera didn't successfully open.
-    std::cerr << "Opening Camera failed." << std::endl; 
-#else
-  if (false) {
+    error(VF_OPEN_FAIL, "Opening Camera failed.");
 #endif
   } else {
     // Waiting for camera to "stabalize"
@@ -66,19 +62,19 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
   camera.grab();
   if (current_mode == CONTINUOUS) {
     if (!camera.isOpened()) 
-      error("camera unopened", "Viewfinder in continuous mode, but camera not opened");
+      error(VF_OPEN_FAIL, "Viewfinder in continuous mode, but camera not opened");
     // if the current mode is continuous, operate as video playback
     camera.retrieve(cv_frame);
   } else {
     // else show the latest image taken
     if (captures.empty())
-      error("captures empty", 
+      error(VF_OPEN_FAIL, 
             "Viewfinder attempting to get a frame from captures, but container is empty");
     cv_frame = captures.back();
   }
  
 	if (cv_frame.empty())
-    error("frame empty", "Viewfinder currently displaying frame is empty");
+    error(FRAME_EMPTY, "Viewfinder currently displaying frame is empty");
  
   // apply a threshold to the frame
 	cv::cvtColor (cv_frame, cv_frame1, CV_BGR2RGB);
@@ -181,7 +177,7 @@ cv::Mat Viewfinder::get_frame(bool fresh) {
 
   // if there are no frames, throw exception
   if (captures.empty()) 
-    error("captures empty", 
+    error(VF_EMPTY, 
           "Viewfinder attempting to get a frame from captures, but container is empty");
 
   return captures.back().clone();
@@ -200,14 +196,12 @@ void Viewfinder::initialize_camera() {
 #if defined RPI
   if (!camera.open()) {
     // Camera didn't successfully open.
-    std::cerr << "Opening Camera failed." << std::endl; 
-    std::cerr << "Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?" << std::endl;
+    error(Exceptions::VF_OPEN_FAIL, 
+        "Opening Camera failed. Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?");
 #elif defined V4L2
   if (!camera.open(0)) {
     // Camera didn't successfully open.
-    std::cerr << "Opening Camera failed." << std::endl; 
-#else
-  if (false) {
+    error(Exceptions::VF_OPEN_FAIL, "Opening Camera failed.");
 #endif
   }
 }

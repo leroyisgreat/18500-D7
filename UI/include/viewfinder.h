@@ -10,12 +10,12 @@
 // this #define is for changing the type of the camera easily
 // for the Raspberry Pi Camera: #define RPI
 // for the standard V4L2 Camera: #define V4L2
-#define RPI
+#define V4L2
 
 #ifndef VIEWFINDER_H
 #define VIEWFINDER_H
 
-#include "camera_mode.h"
+#include "viewfinder_mode.h"
 #include <gtkmm/drawingarea.h>
 #include <opencv2/opencv.hpp>
 #include <raspicam/raspicam_cv.h>
@@ -29,17 +29,11 @@ public:
   /** @brief generic destructor - cleans up camera device handle */
 	virtual ~Viewfinder();
 
-  /** @brief setter for camera mode
-   *
-   * There wasn't an easy way to propogate the mode between the GUI and the
-   * viewfinder. From a design persepctive, the GUI should be the only object
-   * holding this information, but it didn't make sense to have the viewfinder
-   * have access to the object that created it. This was a less-than-elegant
-   * solution.
+  /** @brief setter for viewfinder mode
    *
    * @param mode target mode to put the viewfinder into
    */
-	inline void set_camera_mode(CameraMode mode) {
+	inline void set_viewfinder_mode(ViewfinderMode mode) {
 		current_mode = mode;
 	}
 
@@ -54,11 +48,7 @@ public:
 
   /** @brief setter for the camera device frame
    *
-   * if the current_mode is CONTINUOUS, then this is mostly useless
-   * TODO: Consider failing if the camera mode is in CONTINUOUS
-   * if the current_mode is something else, then this accesses the top of the
-   * captures vector, which should be the frame currently being displayed in the
-   * viewfinder
+   * if the current_mode is STREAM, then this is mostly useless
    *
    * @param frame frame to be appended onto captures
    */
@@ -122,7 +112,7 @@ private:
   }
 
   /** @brief current mode the camera is in - determines HUD elements */
-  CameraMode current_mode;
+  ViewfinderMode current_mode;
 
   /** @brief vector of frames recently captures - usually contains last capture
    * taken */
