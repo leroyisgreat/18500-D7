@@ -85,8 +85,8 @@ private:
   Gtk::Toolbar                  l2_toolbar;
   Gtk::Stack                    l3_stack;
   Viewfinder                    l3_viewfinder;
-  Gtk::Box                      l4_options_CONTINUOUS;
-  Gtk::Box                      l4_options_SINGLE_CAPTURE;
+  Gtk::Box                      l4_options_VIDEO;
+  Gtk::Box                      l4_options_STILL;
   Gtk::Box                      l4_options_HDR;
   Gtk::Box                      l4_options_PANORAMA;
   Gtk::Box                      l4_options_GALLERY;

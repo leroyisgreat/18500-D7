@@ -150,11 +150,11 @@ void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
     case ViewfinderMode::STREAM:
       ss << "LIVE";
       break;
-    case ViewfinderMode::STILL:
-      ss << "STILL";
+    case ViewfinderMode::CAPTURE:
+      ss << "CAP";
       break;
-    case ViewfinderMode::VIDEO_STILL:
-      ss << "VIDEO_STILL";
+    case ViewfinderMode::VIDEO_CAPTURE:
+      ss << "VID_CAP";
       break;
     default:
       ss << "...";

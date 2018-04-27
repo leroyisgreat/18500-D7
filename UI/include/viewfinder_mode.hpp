@@ -12,8 +12,8 @@
 
 enum ViewfinderMode {
   STREAM,
-  STILL,
-  VIDEO_STILL
+  CAPTURE,
+  VIDEO_CAPTURE
 };
 
 #endif // VIEWFINDER_MODE_HPP

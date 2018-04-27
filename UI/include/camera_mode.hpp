@@ -11,8 +11,8 @@
 #define CAMERA_MODE_HPP
 
 enum CameraMode {
-  CONTINUOUS,
-  SINGLE_CAPTURE,
+  VIDEO,
+  STILL,
 	HDR,
   PANORAMA,
   STABILIZE,

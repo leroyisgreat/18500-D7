@@ -8,11 +8,11 @@
 #include "boost/filesystem.hpp"
 
 Gui::Gui()
-: l1_box(                   Gtk::ORIENTATION_VERTICAL,  4),
-  l2_box_top(               Gtk::ORIENTATION_HORIZONTAL,4),
-  l4_options_CONTINUOUS(    Gtk::ORIENTATION_VERTICAL,  4),
-  l4_options_SINGLE_CAPTURE(Gtk::ORIENTATION_VERTICAL,  4),
-  l4_options_HDR(           Gtk::ORIENTATION_VERTICAL,  4),
+: l1_box(          Gtk::ORIENTATION_VERTICAL,  4),
+  l2_box_top(      Gtk::ORIENTATION_HORIZONTAL,4),
+  l4_options_VIDEO(Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_STILL(Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_HDR(  Gtk::ORIENTATION_VERTICAL,  4),
   save_SC("Save"),
   save_HDR("Save"),
   next_G("Next Image"),
@@ -44,14 +44,14 @@ Gui::Gui()
   l2_box_top.pack_start(l3_viewfinder, true, true);
 
   // add control options for each mode
-  l3_stack.add(l4_options_CONTINUOUS, "continuous options");
+  l3_stack.add(l4_options_VIDEO, "Video options");
 
-  l3_stack.add(l4_options_SINGLE_CAPTURE, "single capture options");
-  l4_options_SINGLE_CAPTURE.pack_start(save_SC);
-  l4_options_SINGLE_CAPTURE.pack_start(exposure_label);
-  l4_options_SINGLE_CAPTURE.pack_start(exposure);
-  l4_options_SINGLE_CAPTURE.pack_start(iso_label);
-  l4_options_SINGLE_CAPTURE.pack_start(iso);
+  l3_stack.add(l4_options_STILL, "Still Capture options");
+  l4_options_STILL.pack_start(save_SC);
+  l4_options_STILL.pack_start(exposure_label);
+  l4_options_STILL.pack_start(exposure);
+  l4_options_STILL.pack_start(iso_label);
+  l4_options_STILL.pack_start(iso);
   save_SC.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
   exposure.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_exposure_change));
   iso.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_iso_change));
@@ -64,7 +64,7 @@ Gui::Gui()
   l4_options_GALLERY.pack_start(next_G);
   next_G.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_next_gallery));
 
-  l3_stack.set_visible_child(l4_options_CONTINUOUS);
+  l3_stack.set_visible_child(l4_options_VIDEO);
 
   // Initializing Python environment
   print("Initializing Python environment");
@@ -91,11 +91,11 @@ void Gui::on_mode_change(CameraMode mode) {
   l3_viewfinder.queue_draw();
 
   switch (mode) {
-    case CameraMode::CONTINUOUS:
-      l3_stack.set_visible_child(l4_options_CONTINUOUS);
+    case CameraMode::VIDEO:
+      l3_stack.set_visible_child(l4_options_VIDEO);
       break;
-    case CameraMode::SINGLE_CAPTURE:
-      l3_stack.set_visible_child(l4_options_SINGLE_CAPTURE);
+    case CameraMode::STILL:
+      l3_stack.set_visible_child(l4_options_STILL);
       l3_viewfinder.get_frame(true);
       l3_viewfinder.queue_draw();
       break;
@@ -138,7 +138,7 @@ void Gui::on_save() {
   ss << ".jpg";
   cv::Mat frame = l3_viewfinder.get_frame();
   cv::imwrite(ss.str().c_str(), frame);
-  Gui::on_mode_change(CameraMode::CONTINUOUS);
+  Gui::on_mode_change(CameraMode::VIDEO);
 }
 
 void Gui::on_off() {
@@ -165,17 +165,17 @@ void Gui::populate_toolbar() {
   // link photo capture button to function
   pc_button->signal_clicked().connect(sigc::bind<CameraMode>(
       sigc::mem_fun(*this, &Gui::on_mode_change),
-      CameraMode::SINGLE_CAPTURE));
+      CameraMode::STILL));
   l2_toolbar.append(*pc_button);
 
   // create the photo capture button
   auto live_image = new Gtk::Image(IMG_RESOURCE_PATH + "live.ico");
   auto live_button = new Gtk::ToolButton(*live_image, "live");
-  live_button->set_tooltip_text("Continuous Shooting");
+  live_button->set_tooltip_text("Video Mode");
   // link photo capture button to change camera mode 
   live_button->signal_clicked().connect(sigc::bind<CameraMode>(
       sigc::mem_fun(*this, &Gui::on_mode_change),
-      CameraMode::CONTINUOUS));
+      CameraMode::VIDEO));
   l2_toolbar.append(*live_button);
 
   // create the HDR mode button
