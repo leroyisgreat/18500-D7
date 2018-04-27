@@ -4,7 +4,7 @@
 int main(int argc, const char* argv[]) {
     const cv::Mat input = cv::imread("input.jpg", 0); //Load as grayscale
 
-    cv::SiftFeatureDetector detector;
+    cv::Ptr<Feature2D> detector = xfeatures2d::SIFT::create();
     std::vector<cv::KeyPoint> keypoints;
     detector.detect(input, keypoints);
 
