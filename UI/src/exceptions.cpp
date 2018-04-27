@@ -2,4 +2,6 @@
 
 const char *Exceptions::VF_EMPTY = "captures empty";
 const char *Exceptions::VF_OPEN_FAIL = "camera not opened";
+const char *Exceptions::GUI_UNKOWN_MODE = "unknown CameraMode";
 const char *Exceptions::FRAME_EMPTY = "frame empty";
+const char *Exceptions::PATH_ERROR = "path error";

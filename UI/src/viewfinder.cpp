@@ -156,6 +156,9 @@ void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
     case ViewfinderMode::VIDEO_CAPTURE:
       ss << "VID_CAP";
       break;
+    case ViewfinderMode::VIDEO_CAPTURE_NOW:
+      ss << "VID_CAP (REC)";
+      break;
     default:
       ss << "...";
       break;
@@ -181,15 +184,15 @@ cv::Mat Viewfinder::get_frame(bool fresh) {
     cv::Mat frame;
     camera.grab();
     camera.retrieve(frame);
-    set_frame(frame.clone());
+    return frame.clone();
+  } else {
+    // if there are no frames, throw exception
+    if (captures.empty()) 
+      error(Exceptions::VF_EMPTY, 
+            "Viewfinder getting frame from captures when none available");
+    // else
+    return captures.back().clone();
   }
-
-  // if there are no frames, throw exception
-  if (captures.empty()) 
-    error(Exceptions::VF_EMPTY, 
-          "Viewfinder attempting to get a frame from captures, but container is empty");
-
-  return captures.back().clone();
 }
 
 void Viewfinder::set_frame(cv::Mat frame) {

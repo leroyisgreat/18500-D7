@@ -1,6 +1,7 @@
 // thanks https://git.gnome.org//browse/gstreamermm/tree/examples/media_player_gtkmm/player_window.cc
 
 #include "gui.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 #include <gdk/gdkx.h>
 #include <opencv2/opencv.hpp>
@@ -16,8 +17,8 @@ Gui::Gui()
   save_SC("Save"),
   save_HDR("Save"),
   next_G("Next Image"),
-  adjustment_exposure(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
-  adjustment_iso(Gtk::Adjustment::create(1.0, 1.0, 100.0, 1.0, 10.0, 0.0)),
+  adjustment_exposure(Gtk::Adjustment::create(50.0, 1.0, 100.0, 5.0, 10.0, 0.0)),
+  adjustment_iso(Gtk::Adjustment::create(50.0, 1.0, 100.0, 5.0, 10.0, 0.0)),
   exposure(adjustment_exposure),
   iso(adjustment_iso),
   exposure_label("Exposure [1-100]", Gtk::ALIGN_START),
@@ -38,10 +39,13 @@ Gui::Gui()
   Gui::populate_toolbar();
 
   // add left panel to top l2 box
-  l2_box_top.pack_start(l3_stack, false, false);
+  l2_box_top.pack_start(l3_stack, true, true);
 
   // add viewfinder to top l2 box
   l2_box_top.pack_start(l3_viewfinder, true, true);
+  l3_viewfinder.set_events(Gdk::BUTTON_PRESS_MASK);
+  l3_viewfinder.signal_button_press_event().connect(
+          sigc::mem_fun(*this, &Gui::on_capture));
 
   // add control options for each mode
   l3_stack.add(l4_options_VIDEO, "Video options");
@@ -64,7 +68,9 @@ Gui::Gui()
   l4_options_GALLERY.pack_start(next_G);
   next_G.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_next_gallery));
 
-  l3_stack.set_visible_child(l4_options_VIDEO);
+  l3_stack.set_visible_child(l4_options_STILL);
+
+  current_mode = CameraMode::STILL;
 
   // Initializing Python environment
   print("Initializing Python environment");
@@ -81,80 +87,6 @@ Gui::Gui()
 Gui::~Gui() {
   // destroy Python environment
   Py_Finalize();
-}
-
-void Gui::on_mode_change(CameraMode mode) {
-  print("Changing Camera mode");
-
-  Gui::set_current_mode(mode);
-  // viewfinder must be refreshed
-  l3_viewfinder.queue_draw();
-
-  switch (mode) {
-    case CameraMode::VIDEO:
-      l3_stack.set_visible_child(l4_options_VIDEO);
-      break;
-    case CameraMode::STILL:
-      l3_stack.set_visible_child(l4_options_STILL);
-      l3_viewfinder.get_frame(true);
-      l3_viewfinder.queue_draw();
-      break;
-    case CameraMode::HDR:
-      l3_stack.set_visible_child(l4_options_HDR);
-      hdr();
-      break;
-    case CameraMode::PANORAMA:
-      l3_stack.set_visible_child(l4_options_PANORAMA);
-      panorama();
-      break;
-    case CameraMode::GALLERY:
-      l3_stack.set_visible_child(l4_options_GALLERY);
-      l3_viewfinder.get_frame(true);
-      gallery();
-      break;
-    default:
-      error("unknown CameraMode", "GUI entered unknown camera mode in on_mode_change()");
-  }
-}
-
-void Gui::on_exposure_change() {
-  print("Changing Exposure...");
-  l3_viewfinder.set_property(
-      CV_CAP_PROP_AUTO_EXPOSURE,0);
-  l3_viewfinder.set_property(
-      CV_CAP_PROP_EXPOSURE, exposure.get_value_as_int());
-}
-
-void Gui::on_iso_change() {
-  print("Changing ISO...");
-  l3_viewfinder.set_property(
-      CV_CAP_PROP_GAIN, iso.get_value_as_int());
-}
-
-void Gui::on_save() {
-  std::stringstream ss;
-  ss << IMG_SAVE_PATH;
-  ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  ss << ".jpg";
-  cv::Mat frame = l3_viewfinder.get_frame();
-  cv::imwrite(ss.str().c_str(), frame);
-  Gui::on_mode_change(CameraMode::VIDEO);
-}
-
-void Gui::on_off() {
-  Gtk::Main::quit();
-}
-
-void Gui::on_next_gallery() {
-  const char* top_file = *saved_files.begin();
-  std::stringstream ss;
-  ss << "Switching gallery to file: ";
-  ss << top_file;
-  print(ss.str().c_str());
-  saved_files.push_back(top_file);
-
-  cv::Mat image = cv::imread(top_file);
-  l3_viewfinder.set_frame(image);
 }
 
 void Gui::populate_toolbar() {
@@ -222,6 +154,112 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*off_button);
 }
 
+// SIGNAL HANDLERS {{{
+bool Gui::on_capture(GdkEventButton *event) {
+  switch (current_mode) {
+    case CameraMode::STILL:
+      l3_viewfinder.set_frame(l3_viewfinder.get_frame(true));
+      l3_viewfinder.set_viewfinder_mode(ViewfinderMode::CAPTURE);
+      l3_viewfinder.queue_draw();
+      break;
+    case CameraMode::VIDEO:
+      if (l3_viewfinder.get_viewfinder_mode() 
+          == ViewfinderMode::VIDEO_CAPTURE_NOW) {
+        l3_viewfinder.set_viewfinder_mode(ViewfinderMode::VIDEO_CAPTURE);
+      } else {
+        l3_viewfinder.set_viewfinder_mode(ViewfinderMode::VIDEO_CAPTURE_NOW);
+      }
+      break;
+    case CameraMode::HDR:
+      hdr();
+      break;
+    case CameraMode::PANORAMA:
+      panorama();
+      break;
+    case CameraMode::GALLERY:
+      gallery();
+      break;
+    default:
+      error(Exceptions::GUI_UNKOWN_MODE, 
+            "GUI entered unknown camera mode in on_capture()");
+  }
+}
+
+void Gui::on_exposure_change() {
+  print("Changing Exposure...");
+  l3_viewfinder.set_property(
+      CV_CAP_PROP_AUTO_EXPOSURE,0);
+  l3_viewfinder.set_property(
+      CV_CAP_PROP_EXPOSURE, exposure.get_value_as_int());
+}
+
+void Gui::on_iso_change() {
+  print("Changing ISO...");
+  l3_viewfinder.set_property(
+      CV_CAP_PROP_GAIN, iso.get_value_as_int());
+}
+
+void Gui::on_mode_change(CameraMode mode) {
+  print("Changing Camera mode");
+
+  Gui::set_current_mode(mode);
+  // viewfinder must be refreshed
+  l3_viewfinder.queue_draw();
+
+  switch (mode) {
+    case CameraMode::STILL:
+      l3_stack.set_visible_child(l4_options_STILL);
+      break;
+    case CameraMode::VIDEO:
+      l3_stack.set_visible_child(l4_options_VIDEO);
+      break;
+    case CameraMode::HDR:
+      l3_stack.set_visible_child(l4_options_HDR);
+      hdr();
+      break;
+    case CameraMode::PANORAMA:
+      l3_stack.set_visible_child(l4_options_PANORAMA);
+      panorama();
+      break;
+    case CameraMode::GALLERY:
+      l3_stack.set_visible_child(l4_options_GALLERY);
+      l3_viewfinder.get_frame(true);
+      gallery();
+      break;
+    default:
+      error(Exceptions::GUI_UNKOWN_MODE, 
+            "GUI entered unknown camera mode in on_mode_change()");
+  }
+}
+
+void Gui::on_save() {
+  std::stringstream ss;
+  ss << IMG_SAVE_PATH;
+  ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  ss << ".jpg";
+  cv::Mat frame = l3_viewfinder.get_frame();
+  cv::imwrite(ss.str().c_str(), frame);
+  Gui::on_mode_change(CameraMode::VIDEO);
+}
+
+void Gui::on_next_gallery() {
+  const char* top_file = *saved_files.begin();
+  std::stringstream ss;
+  ss << "Switching gallery to file: ";
+  ss << top_file;
+  print(ss.str().c_str());
+  saved_files.push_back(top_file);
+
+  cv::Mat image = cv::imread(top_file);
+  l3_viewfinder.set_frame(image);
+}
+
+void Gui::on_off() {
+  Gtk::Main::quit();
+}
+// }}}
+
+// MODE FUNCTIONS {{{
 void Gui::set_current_mode(CameraMode mode) {
   current_mode = mode;
 }
@@ -254,7 +292,7 @@ void Gui::gallery() {
 
   if(!boost::filesystem::exists(IMG_SAVE_PATH) || 
      !boost::filesystem::is_directory(IMG_SAVE_PATH))
-    error("gallery path error","Error when populating gallery");
+    error(Exceptions::PATH_ERROR,"Error when populating gallery");
 
   boost::filesystem::recursive_directory_iterator it(IMG_SAVE_PATH);
   boost::filesystem::recursive_directory_iterator endit;
@@ -280,5 +318,4 @@ void Gui::gallery() {
   ss << " images found.";
   print(ss.str().c_str());
 }
-
-
+// }}}

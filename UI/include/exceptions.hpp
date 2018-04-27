@@ -13,7 +13,9 @@
 struct Exceptions {
   static const char *VF_EMPTY;
   static const char *VF_OPEN_FAIL;
+  static const char *GUI_UNKOWN_MODE;
   static const char *FRAME_EMPTY;
+  static const char *PATH_ERROR;
 };
 
 #endif // EXCEPTIONS_HPP

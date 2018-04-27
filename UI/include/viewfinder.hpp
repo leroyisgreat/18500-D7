@@ -37,6 +37,14 @@ public:
 		current_mode = mode;
 	}
 
+  /** @brief getter for viewfinder mode
+   *
+   * @return current mode
+   */
+	inline ViewfinderMode get_viewfinder_mode() {
+		return current_mode;
+	}
+
   /** @brief getter for the camera device frame
    *
    * @param fresh if true then a fresh capture will be made and given else a
@@ -72,7 +80,7 @@ public:
   /** @brief string to relay more information from GUI to viewfinder */
   std::string hud_info;
 
-private:
+protected:
   /** @brief timeout function called at FRAMERATE_INTERVAL to re-fetch a frame
    * from the camera
    */
@@ -86,6 +94,7 @@ private:
    */
   virtual bool on_draw (const Cairo::RefPtr<Cairo::Context> &cr);
 
+private:
   /**
    * @brief Add Heads-Up-display information to viewfinder screen, ontop of
    * capture frame
@@ -136,9 +145,10 @@ private:
   /** @brief period to call on_timeout in milliseconds
    *
    * 50 -> 20 FPS
+   * 40 -> 25 FPS
    * 33 -> 30 FPS
    */
-  const int FRAMERATE_INTERVAL = 50;
+  const int FRAMERATE_INTERVAL = 40;
 };
 
 #endif // VIEWFINDER_HPP

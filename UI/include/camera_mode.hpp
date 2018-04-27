@@ -11,8 +11,8 @@
 #define CAMERA_MODE_HPP
 
 enum CameraMode {
-  VIDEO,
   STILL,
+  VIDEO,
 	HDR,
   PANORAMA,
   STABILIZE,
