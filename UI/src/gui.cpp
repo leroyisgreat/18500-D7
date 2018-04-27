@@ -1,7 +1,6 @@
 // thanks https://git.gnome.org//browse/gstreamermm/tree/examples/media_player_gtkmm/player_window.cc
 
-#include "camera_mode.h"
-#include "gui.h"
+#include "gui.hpp"
 #include <iostream>
 #include <gdk/gdkx.h>
 #include <opencv2/opencv.hpp>

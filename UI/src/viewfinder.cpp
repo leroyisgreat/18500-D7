@@ -7,9 +7,9 @@
  * @author  LeRoy Gary <lgary@andrew.cmu.edu>
  */
 
-#include "gui.h"
-#include "viewfinder.h"
-#include "exceptions.h"
+#include "gui.hpp"
+#include "viewfinder.hpp"
+#include "exceptions.hpp"
 #include <cairomm/context.h>
 #include <gdkmm/general.h> // set_source_pixbuf()
 #include <giomm/resource.h>
@@ -21,9 +21,9 @@ Viewfinder::Viewfinder() {
   if (!camera.isOpened()) {
     // Camera didn't successfully open.
 #if defined RPI
-    error(VF_OPEN_FAIL, "Opening Camera failed. Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?");
+    error(Exceptions::VF_OPEN_FAIL, "Opening Camera failed. Are you running this on a Raspberry Pi with the camera connected via the Ribbon Cable?");
 #elif defined V4L2
-    error(VF_OPEN_FAIL, "Opening Camera failed.");
+    error(Exceptions::VF_OPEN_FAIL, "Opening Camera failed.");
 #endif
   } else {
     // Waiting for camera to "stabalize"
@@ -36,8 +36,14 @@ Viewfinder::Viewfinder() {
     Glib::signal_timeout().connect(
         sigc::mem_fun(*this, &Viewfinder::on_timeout), FRAMERATE_INTERVAL);
   }
-  current_mode = CameraMode::CONTINUOUS;
+  current_mode = ViewfinderMode::STREAM;
   print("Setup finished.");
+  std::stringstream ss;
+  ss << "Frame Width: ";
+  ss << camera.get(cv::CAP_PROP_FRAME_WIDTH);
+  ss << " Frame Height: ";
+  ss << camera.get(cv::CAP_PROP_FRAME_HEIGHT);
+  print(ss.str());
 }
 
 Viewfinder::~Viewfinder() {
@@ -60,21 +66,21 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	cv::Mat cv_frame, cv_frame1;
 
   camera.grab();
-  if (current_mode == CONTINUOUS) {
+  if (current_mode == ViewfinderMode::STREAM) {
     if (!camera.isOpened()) 
-      error(VF_OPEN_FAIL, "Viewfinder in continuous mode, but camera not opened");
+      error(Exceptions::VF_OPEN_FAIL, "Viewfinder in continuous mode, but camera not opened");
     // if the current mode is continuous, operate as video playback
     camera.retrieve(cv_frame);
   } else {
     // else show the latest image taken
     if (captures.empty())
-      error(VF_OPEN_FAIL, 
+      error(Exceptions::VF_OPEN_FAIL, 
             "Viewfinder attempting to get a frame from captures, but container is empty");
     cv_frame = captures.back();
   }
  
 	if (cv_frame.empty())
-    error(FRAME_EMPTY, "Viewfinder currently displaying frame is empty");
+    error(Exceptions::FRAME_EMPTY, "Viewfinder currently displaying frame is empty");
  
   // apply a threshold to the frame
 	cv::cvtColor (cv_frame, cv_frame1, CV_BGR2RGB);
@@ -138,21 +144,24 @@ void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
   cr->stroke();
   cr->restore();
 
+  std::stringstream ss;
   Glib::RefPtr<Pango::Layout> layout;
   switch (current_mode) {
-    case CameraMode::CONTINUOUS:
-      layout = create_pango_layout("LIVE");
+    case ViewfinderMode::STREAM:
+      ss << "LIVE";
       break;
-    case CameraMode::SINGLE_CAPTURE:
-      layout = create_pango_layout("ONE SHOT");
+    case ViewfinderMode::STILL:
+      ss << "STILL";
       break;
-    case CameraMode::HDR:
-      layout = create_pango_layout("HDR");
+    case ViewfinderMode::VIDEO_STILL:
+      ss << "VIDEO_STILL";
       break;
     default:
-      layout = create_pango_layout("...");
+      ss << "...";
       break;
 	}
+  ss << hud_info;
+  layout = create_pango_layout(ss.str());
 
   int text_width;
   int text_height;
@@ -177,7 +186,7 @@ cv::Mat Viewfinder::get_frame(bool fresh) {
 
   // if there are no frames, throw exception
   if (captures.empty()) 
-    error(VF_EMPTY, 
+    error(Exceptions::VF_EMPTY, 
           "Viewfinder attempting to get a frame from captures, but container is empty");
 
   return captures.back().clone();

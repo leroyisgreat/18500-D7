@@ -1,5 +1,5 @@
 /**
- * @file    gui.h
+ * @file    gui.hpp
  *
  * @brief   top level class for manaing GTK UI elements
  *
@@ -29,12 +29,12 @@
  * @author  LeRoy Gary <lgary@andrew.cmu.edu>
  */
 
-#ifndef GUI_H 
-#define GUI_H
+#ifndef GUI_HPP
+#define GUI_HPP
 
-#include "camera_mode.h"
+#include "camera_mode.hpp"
 #include <gtkmm.h>
-#include "viewfinder.h"
+#include "viewfinder.hpp"
 
 class Gui : public Gtk::Window {
 public:
@@ -100,12 +100,12 @@ private:
 	CameraMode current_mode;
 
   /** @brief location of all resource images */
-  const std::string IMG_RESOURCE_PATH = "/home/pi/workspace/18500-D7/UI/resources/";
+  const std::string IMG_RESOURCE_PATH = "/home/leroyce/workspace/18500-D7/UI/resources/";
 
   /** @brief location of all manually saved images */
-  const std::string IMG_SAVE_PATH = "/home/pi/workspace/18500-D7/saves/";
+  const std::string IMG_SAVE_PATH = "/home/leroyce/workspace/18500-D7/saves/";
 
   std::vector<const char*> saved_files;
 };
 
-#endif // GUI_H
+#endif // GUI_HPP

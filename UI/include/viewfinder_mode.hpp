@@ -1,5 +1,5 @@
 /**
- * @file    viewfinder_mode.h
+ * @file    viewfinder_mode.hpp
  *
  * @brief   enum for managing the viewfinder dispaly mode
  *
@@ -7,8 +7,8 @@
  * @author  LeRoy Gary <lgary@andrew.cmu.edu>
  */
 
-#ifndef VIEWFINDER_MODE_H
-#define VIEWFINDER_MODE_H
+#ifndef VIEWFINDER_MODE_HPP
+#define VIEWFINDER_MODE_HPP
 
 enum ViewfinderMode {
   STREAM,
@@ -16,4 +16,4 @@ enum ViewfinderMode {
   VIDEO_STILL
 };
 
-#endif // VIEWFINDER_MODE_H
+#endif // VIEWFINDER_MODE_HPP

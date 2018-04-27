@@ -1,5 +1,5 @@
 /**
- * @file    camera_mode.h
+ * @file    camera_mode.hpp
  *
  * @brief   enum for managing what UI elements are being configured
  *
@@ -7,8 +7,8 @@
  * @author  LeRoy Gary <lgary@andrew.cmu.edu>
  */
 
-#ifndef CAMERA_MODE_H
-#define CAMERA_MODE_H
+#ifndef CAMERA_MODE_HPP
+#define CAMERA_MODE_HPP
 
 enum CameraMode {
   CONTINUOUS,
@@ -19,4 +19,4 @@ enum CameraMode {
   GALLERY
 };
 
-#endif // CAMERA_MODE_H
+#endif // CAMERA_MODE_HPP

@@ -1,5 +1,5 @@
 /**
- * @file    viewfinder.h
+ * @file    viewfinder.hpp
  *
  * @brief   class for manaing the Viewfinder in the UI by overriding a Cairo object
  *
@@ -10,12 +10,12 @@
 // this #define is for changing the type of the camera easily
 // for the Raspberry Pi Camera: #define RPI
 // for the standard V4L2 Camera: #define V4L2
+#ifndef VIEWFINDER_HPP
+#define VIEWFINDER_HPP
+
 #define V4L2
 
-#ifndef VIEWFINDER_H
-#define VIEWFINDER_H
-
-#include "viewfinder_mode.h"
+#include "viewfinder_mode.hpp"
 #include <gtkmm/drawingarea.h>
 #include <opencv2/opencv.hpp>
 #include <raspicam/raspicam_cv.h>
@@ -63,8 +63,14 @@ public:
       camera.set(propId, value);
   }
 
+  /** @brief initializes camera device for use */
   void initialize_camera();
+
+  /** @brief uninitializes camera device fo other programs to use it */
   void uninitialize_camera();
+
+  /** @brief string to relay more information from GUI to viewfinder */
+  std::string hud_info;
 
 private:
   /** @brief timeout function called at FRAMERATE_INTERVAL to re-fetch a frame
@@ -94,7 +100,7 @@ private:
    *
    * @param input information string to be printed
    */
-  inline void print(const char *input) {
+  inline void print(std::string input) {
     std::cout << "VIEWFINDER: " << input << std::endl;
   }
 
@@ -104,7 +110,7 @@ private:
    * @param info information string to be printed
    * @param err exception to be thrown
    */
-  inline void error(const char *err, const char *info) {
+  inline void error(const char *err, std::string info) {
     std::cout << "[E] VIEWFINDER: " << info << std::endl;
     std::string error_str("VIEWFINDER: ");
     error_str += err;
@@ -135,5 +141,4 @@ private:
   const int FRAMERATE_INTERVAL = 50;
 };
 
-#endif // VIEWFINDER_H
-
+#endif // VIEWFINDER_HPP
