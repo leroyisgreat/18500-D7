@@ -33,7 +33,7 @@ public:
    *
    * @param mode target mode to put the viewfinder into
    */
-	inline void set_viewfinder_mode(ViewfinderMode mode) {
+	inline void set_mode(ViewfinderMode mode) {
 		current_mode = mode;
 	}
 
@@ -41,7 +41,7 @@ public:
    *
    * @return current mode
    */
-	inline ViewfinderMode get_viewfinder_mode() {
+	inline ViewfinderMode get_mode() {
 		return current_mode;
 	}
 
@@ -70,6 +70,18 @@ public:
   inline void set_property(int propId, double value) {
       camera.set(propId, value);
   }
+
+  /**
+   * @brief starts captureing video
+   *
+   * @param path to save video
+   */
+  void start_capture(std::string location);
+
+  /**
+   * @brief stops capturing video
+   */
+  bool stop_capture();
 
   /** @brief initializes camera device for use */
   void initialize_camera();
@@ -129,17 +141,17 @@ private:
   /** @brief current mode the camera is in - determines HUD elements */
   ViewfinderMode current_mode;
 
-  /** @brief vector of frames recently captures - usually contains last capture
-   * taken */
-  std::vector<cv::Mat> captures;
+  /** @brief recently captured frame, when waiting to save */
+  cv::Mat still_capture;
+
+  /** @brief recently captured video, when waiting to save */
+  cv::VideoWriter video_capture;
 
   /** @brief actual camera device */
 #if defined RPI
   raspicam::RaspiCam_Cv camera;
 #elif defined V4L2
   cv::VideoCapture camera;
-#else
-  void camera = NULL;
 #endif
 
   /** @brief period to call on_timeout in milliseconds

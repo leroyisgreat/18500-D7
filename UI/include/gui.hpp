@@ -53,7 +53,7 @@ private:
 
   // regular functions
   void populate_toolbar();
-  void set_current_mode(CameraMode mode);
+  void set_mode(CameraMode mode);
   void hdr();
   void panorama();
   void gallery();

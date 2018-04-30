@@ -71,12 +71,23 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
       error(Exceptions::VF_OPEN_FAIL, "Viewfinder in continuous mode, but camera not opened");
     // if the current mode is continuous, operate as video playback
     camera.retrieve(cv_frame);
+  //} else if (current_mode == ViewfinderMode::VIDEO_CAPTURE) {
+  } else if (current_mode == ViewfinderMode::VIDEO_CAPTURE_NOW) {
+    /* TODO: Figure out good safety checks
+    if (!video_capture.isOpened())
+      error(Exceptions::VF_WRITER_OPEN_FAIL, 
+            "viewfinder recording but no writer opened");
+    */
+    video_capture.write(cv_frame);
+    still_capture = cv_frame;
   } else {
     // else show the latest image taken
-    if (captures.empty())
+    /* TODO: Figure out good safety checks
+    if (still_capture == NULL)
       error(Exceptions::VF_OPEN_FAIL, 
             "Viewfinder attempting to get a frame from captures, but container is empty");
-    cv_frame = captures.back();
+    */
+    cv_frame = still_capture;
   }
  
 	if (cv_frame.empty())
@@ -163,6 +174,7 @@ void Viewfinder::draw_hud(const Cairo::RefPtr<Cairo::Context>& cr,
       ss << "...";
       break;
 	}
+  ss << " ";
   ss << hud_info;
   layout = create_pango_layout(ss.str());
 
@@ -187,20 +199,39 @@ cv::Mat Viewfinder::get_frame(bool fresh) {
     return frame.clone();
   } else {
     // if there are no frames, throw exception
-    if (captures.empty()) 
+    /* TODO: Figure out good safety checks
+    if (still_capture == NULL) 
       error(Exceptions::VF_EMPTY, 
             "Viewfinder getting frame from captures when none available");
+    */
     // else
-    return captures.back().clone();
+    return still_capture.clone();
   }
 }
 
 void Viewfinder::set_frame(cv::Mat frame) {
   print("Manually setting frame");
-  // for now, there is only a need to store one element, but it is expected that
-  // this will change
-  captures.clear();
-  captures.push_back(frame);
+  still_capture = frame;
+}
+
+
+bool Viewfinder::stop_capture() {
+  print("Stopping video capture");
+  video_capture.release();
+  current_mode = ViewfinderMode::VIDEO_CAPTURE;
+  return false;
+}
+
+void Viewfinder::start_capture(std::string location) {
+  print("Starting video capture");
+  video_capture.open(location, 
+                cv::VideoWriter::fourcc('M','J','P','G'),
+                1000.0/FRAMERATE_INTERVAL,
+                cv::Size(camera.get(cv::CAP_PROP_FRAME_WIDTH),
+                         camera.get(cv::CAP_PROP_FRAME_HEIGHT)));
+  current_mode = ViewfinderMode::VIDEO_CAPTURE_NOW;
+  Glib::signal_timeout().connect(
+      sigc::mem_fun(*this, &Viewfinder::stop_capture), 30000);
 }
 
 void Viewfinder::initialize_camera() {

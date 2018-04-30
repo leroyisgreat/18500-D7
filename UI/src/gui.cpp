@@ -68,9 +68,7 @@ Gui::Gui()
   l4_options_GALLERY.pack_start(next_G);
   next_G.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_next_gallery));
 
-  l3_stack.set_visible_child(l4_options_STILL);
-
-  current_mode = CameraMode::STILL;
+  on_mode_change(CameraMode::STILL);
 
   // Initializing Python environment
   print("Initializing Python environment");
@@ -159,15 +157,20 @@ bool Gui::on_capture(GdkEventButton *event) {
   switch (current_mode) {
     case CameraMode::STILL:
       l3_viewfinder.set_frame(l3_viewfinder.get_frame(true));
-      l3_viewfinder.set_viewfinder_mode(ViewfinderMode::CAPTURE);
+      l3_viewfinder.set_mode(ViewfinderMode::CAPTURE);
       l3_viewfinder.queue_draw();
       break;
     case CameraMode::VIDEO:
-      if (l3_viewfinder.get_viewfinder_mode() 
+      if (l3_viewfinder.get_mode() 
           == ViewfinderMode::VIDEO_CAPTURE_NOW) {
-        l3_viewfinder.set_viewfinder_mode(ViewfinderMode::VIDEO_CAPTURE);
+        l3_viewfinder.stop_capture();
       } else {
-        l3_viewfinder.set_viewfinder_mode(ViewfinderMode::VIDEO_CAPTURE_NOW);
+        std::stringstream ss;
+        //ss << "appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=";
+        ss << IMG_SAVE_PATH;
+        //ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        ss << "bruh.mkv";
+        l3_viewfinder.start_capture(ss.str());
       }
       break;
     case CameraMode::HDR:
@@ -183,6 +186,7 @@ bool Gui::on_capture(GdkEventButton *event) {
       error(Exceptions::GUI_UNKOWN_MODE, 
             "GUI entered unknown camera mode in on_capture()");
   }
+  return true;;
 }
 
 void Gui::on_exposure_change() {
@@ -202,16 +206,17 @@ void Gui::on_iso_change() {
 void Gui::on_mode_change(CameraMode mode) {
   print("Changing Camera mode");
 
-  Gui::set_current_mode(mode);
-  // viewfinder must be refreshed
-  l3_viewfinder.queue_draw();
+  Gui::set_mode(mode);
+  l3_viewfinder.set_mode(ViewfinderMode::STREAM);
 
   switch (mode) {
     case CameraMode::STILL:
       l3_stack.set_visible_child(l4_options_STILL);
+      l3_viewfinder.hud_info = "📷";
       break;
     case CameraMode::VIDEO:
       l3_stack.set_visible_child(l4_options_VIDEO);
+      l3_viewfinder.hud_info = "📹";
       break;
     case CameraMode::HDR:
       l3_stack.set_visible_child(l4_options_HDR);
@@ -239,7 +244,7 @@ void Gui::on_save() {
   ss << ".jpg";
   cv::Mat frame = l3_viewfinder.get_frame();
   cv::imwrite(ss.str().c_str(), frame);
-  Gui::on_mode_change(CameraMode::VIDEO);
+  l3_viewfinder.set_mode(ViewfinderMode::STREAM);
 }
 
 void Gui::on_next_gallery() {
@@ -260,7 +265,7 @@ void Gui::on_off() {
 // }}}
 
 // MODE FUNCTIONS {{{
-void Gui::set_current_mode(CameraMode mode) {
+void Gui::set_mode(CameraMode mode) {
   current_mode = mode;
 }
 
