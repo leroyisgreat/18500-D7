@@ -45,3 +45,8 @@ stabilization/*.jpg
 
 # all saved images
 saves/
+
+# non-resource images and videos
+*.jpg
+*.avi
+*.mkv
