@@ -73,20 +73,18 @@ bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
     camera.retrieve(cv_frame);
   //} else if (current_mode == ViewfinderMode::VIDEO_CAPTURE) {
   } else if (current_mode == ViewfinderMode::VIDEO_CAPTURE_NOW) {
-    /* TODO: Figure out good safety checks
     if (!video_capture.isOpened())
       error(Exceptions::VF_WRITER_OPEN_FAIL, 
             "viewfinder recording but no writer opened");
-    */
     video_capture.write(cv_frame);
     still_capture = cv_frame;
   } else {
     // else show the latest image taken
-    /* TODO: Figure out good safety checks
+    /* TODO better safety checks
     if (still_capture == NULL)
       error(Exceptions::VF_OPEN_FAIL, 
             "Viewfinder attempting to get a frame from captures, but container is empty");
-    */
+            */
     cv_frame = still_capture;
   }
  
@@ -224,8 +222,11 @@ bool Viewfinder::stop_capture() {
 
 void Viewfinder::start_capture(std::string location) {
   print("Starting video capture");
-  video_capture.open(location, 
-                cv::VideoWriter::fourcc('M','J','P','G'),
+  //video_capture.open(location, 
+  //video_capture.open("appsrc ! autovideoconvert ! v4l2video1h264enc extra-controls=\"encode,h264_level=10,h264_profile=4,frame_level_rate_control_enable=1,video_bitrate=2000000\" ! h264parse ! rtph264pay config-interval=1 pt=96 ! filesink location=file.avi ",
+  video_capture.open(
+                "appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv ", 
+                0,
                 1000.0/FRAMERATE_INTERVAL,
                 cv::Size(camera.get(cv::CAP_PROP_FRAME_WIDTH),
                          camera.get(cv::CAP_PROP_FRAME_HEIGHT)));

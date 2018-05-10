@@ -8,6 +8,23 @@
 #include <python2.7/Python.h>
 #include "boost/filesystem.hpp"
 
+namespace
+{
+  class IconEntry
+  {
+  public:
+    IconEntry()
+    {}
+
+    IconEntry(const std::string& filename)
+    : m_filename(filename)
+    {}
+
+
+    const std::string m_filename;
+  };
+}
+
 Gui::Gui()
 : l1_box(          Gtk::ORIENTATION_VERTICAL,  4),
   l2_box_top(      Gtk::ORIENTATION_HORIZONTAL,4),
@@ -16,7 +33,6 @@ Gui::Gui()
   l4_options_HDR(  Gtk::ORIENTATION_VERTICAL,  4),
   save_SC("Save"),
   save_HDR("Save"),
-  next_G("Next Image"),
   adjustment_exposure(Gtk::Adjustment::create(50.0, 1.0, 100.0, 5.0, 10.0, 0.0)),
   adjustment_iso(Gtk::Adjustment::create(50.0, 1.0, 100.0, 5.0, 10.0, 0.0)),
   exposure(adjustment_exposure),
@@ -26,10 +42,18 @@ Gui::Gui()
 {
   // set title of new window.
   set_title("18-500 Team D7 GUI");
-  // set border width of the window.
+  // set window characteristics.
   set_border_width(10);
   set_default_size(800,600);
 
+  const char *home = std::getenv("HOME");
+  if (home == NULL) {
+    error(Exceptions::PATH_ERROR, "Error getting user home path");
+  } else {
+    HOME_PATH = std::string(home);
+  }
+
+  // ASSEMBLE GUI {{{
   // add highest level container (vertical box)
   add(l1_box);
 
@@ -65,11 +89,23 @@ Gui::Gui()
   save_HDR.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
 
   l3_stack.add(l4_options_GALLERY, "Gallery options");
-  l4_options_GALLERY.pack_start(next_G);
-  next_G.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_next_gallery));
+  l4_options_GALLERY.pack_start(scrolled_window);
+  scrolled_window.add(icon_view);
 
+	list_model = Gtk::ListStore::create(m_Columns);
+	list_model->set_sort_column( m_Columns.m_col_filename, Gtk::SortType::SORT_ASCENDING);
+
+  icon_view.set_model(list_model);
+	icon_view.set_pixbuf_column(m_Columns.m_col_pixbuf);
+  icon_view.set_columns(1);
+  // }}}
+
+  // set visibility to all children to be seen
+  show_all_children();
+  // Switch to the still camera mode
   on_mode_change(CameraMode::STILL);
 
+  // PYTHON SETUP {{{
   // Initializing Python environment
   print("Initializing Python environment");
   Py_Initialize();
@@ -77,8 +113,8 @@ Gui::Gui()
   PyRun_SimpleString("import sys");
   // append script folder to PATH so imports work properly
   PyRun_SimpleString("sys.path.append('/home/pi/workspace/18500-D7/hdr/')");
+  // }}}
 
-  show_all_children();
   print("Setup finished.");
 }
 
@@ -89,7 +125,8 @@ Gui::~Gui() {
 
 void Gui::populate_toolbar() {
   // create the photo capture button
-  auto pc_image = new Gtk::Image(IMG_RESOURCE_PATH + "shoot.ico");
+  auto pc_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "shoot.ico");
   auto pc_button = new Gtk::ToolButton(*pc_image, "shoot");
   pc_button->set_tooltip_text("Take photo");
   // link photo capture button to function
@@ -99,7 +136,8 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*pc_button);
 
   // create the photo capture button
-  auto live_image = new Gtk::Image(IMG_RESOURCE_PATH + "live.ico");
+  auto live_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "live.ico");
   auto live_button = new Gtk::ToolButton(*live_image, "live");
   live_button->set_tooltip_text("Video Mode");
   // link photo capture button to change camera mode 
@@ -109,7 +147,8 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*live_button);
 
   // create the HDR mode button
-  auto hdr_image = new Gtk::Image(IMG_RESOURCE_PATH + "hdr.ico");
+  auto hdr_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "hdr.ico");
   auto hdr_button = new Gtk::ToolButton(*hdr_image, "hdr");
   hdr_button->set_tooltip_text("Toggle HDR mode");
   hdr_button->signal_clicked().connect(sigc::bind<CameraMode>(
@@ -118,7 +157,8 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*hdr_button);
 
   // create the Panorama mode button
-  auto panorama_image = new Gtk::Image(IMG_RESOURCE_PATH + "panorama.ico");
+  auto panorama_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "panorama.ico");
   auto panorama_button = new Gtk::ToolButton(*panorama_image, "panorama");
   panorama_button->set_tooltip_text("Toggle Panorama mode");
   panorama_button->signal_clicked().connect(sigc::bind<CameraMode>(
@@ -127,7 +167,8 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*panorama_button);
 
   // create the Stabilize mode button
-  auto stabilize_image = new Gtk::Image(IMG_RESOURCE_PATH + "stabilize.ico");
+  auto stabilize_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "stabilize.ico");
   auto stabilize_button = new Gtk::ToolButton(*stabilize_image, "stabilize");
   stabilize_button->set_tooltip_text("Toggle Image Stabilization mode");
   stabilize_button->signal_clicked().connect(sigc::bind<CameraMode>(
@@ -136,7 +177,8 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*stabilize_button);
 
   // create the gallery button
-  auto gallery_image = new Gtk::Image(IMG_RESOURCE_PATH + "gallery.ico");
+  auto gallery_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "gallery.ico");
   auto gallery_button = new Gtk::ToolButton(*gallery_image, "gallery");
   gallery_button->set_tooltip_text("Toggle Gallery mode");
   gallery_button->signal_clicked().connect(sigc::bind<CameraMode>(
@@ -145,7 +187,8 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*gallery_button);
 
   // create the OFF button
-  auto off_image = new Gtk::Image(IMG_RESOURCE_PATH + "off.ico");
+  auto off_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "off.ico");
   auto off_button = new Gtk::ToolButton(*off_image, "off");
   off_button->set_tooltip_text("Turn camera OFF");
   off_button->signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_off));
@@ -239,24 +282,13 @@ void Gui::on_mode_change(CameraMode mode) {
 
 void Gui::on_save() {
   std::stringstream ss;
+  ss << HOME_PATH;
   ss << IMG_SAVE_PATH;
   ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   ss << ".jpg";
   cv::Mat frame = l3_viewfinder.get_frame();
   cv::imwrite(ss.str().c_str(), frame);
   l3_viewfinder.set_mode(ViewfinderMode::STREAM);
-}
-
-void Gui::on_next_gallery() {
-  const char* top_file = *saved_files.begin();
-  std::stringstream ss;
-  ss << "Switching gallery to file: ";
-  ss << top_file;
-  print(ss.str().c_str());
-  saved_files.push_back(top_file);
-
-  cv::Mat image = cv::imread(top_file);
-  l3_viewfinder.set_frame(image);
 }
 
 void Gui::on_off() {
@@ -294,33 +326,57 @@ void Gui::panorama() {
 
 void Gui::gallery() {
   print("Populating Gallery...");
+  list_model->clear();
+  std::string location = HOME_PATH + IMG_SAVE_PATH;
+  print(location.c_str());
 
-  if(!boost::filesystem::exists(IMG_SAVE_PATH) || 
-     !boost::filesystem::is_directory(IMG_SAVE_PATH))
+  if(!boost::filesystem::exists(location) || 
+     !boost::filesystem::is_directory(location))
     error(Exceptions::PATH_ERROR,"Error when populating gallery");
 
-  boost::filesystem::recursive_directory_iterator it(IMG_SAVE_PATH);
+  boost::filesystem::recursive_directory_iterator it(location);
   boost::filesystem::recursive_directory_iterator endit;
 
   const std::string ext(".jpg");
 
-  saved_files.clear();
-
   std::stringstream ss;
   std::string s;
 	while(it != endit) {
-    if(boost::filesystem::is_regular_file(*it) && it->path().extension() == ext) {
-      s = it->path().filename().string();
+    if(boost::filesystem::is_regular_file(*it) && 
+       it->path().extension() == ext) {
+      s = it->path().string();
       const char* filename = s.c_str();
       ss << filename;
       ss << " ";
-      saved_files.push_back(filename);
+      add_entry(filename);
     }
     ++it;
   }
-  ss << " -- ";
-  ss << saved_files.size();
-  ss << " images found.";
+
   print(ss.str().c_str());
+}
+// }}}
+
+// HELPER FUNCTIONS {{{
+void Gui::add_entry(const std::string& filename) {
+  auto row = *(list_model->append());
+  row[m_Columns.m_col_filename] = filename;
+
+  try
+  {
+    auto p = Gdk::Pixbuf::create_from_file(filename);
+    int w = p->get_width();
+    int h = p->get_height();
+    double scale = 100.0 / w;
+    row[m_Columns.m_col_pixbuf] = p->scale_simple(w*scale,h*scale,Gdk::INTERP_BILINEAR);
+  }
+  catch (const Gdk::PixbufError& ex)
+  {
+    std::cerr << "Gdk::PixbufError: " << ex.what() << std::endl;
+  }
+  catch (const Glib::FileError& ex)
+  {
+    std::cerr << "Glib::FileError: " << ex.what() << std::endl;
+  }
 }
 // }}}
