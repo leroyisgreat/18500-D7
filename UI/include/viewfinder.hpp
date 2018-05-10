@@ -140,12 +140,12 @@ private:
 
   /** @brief current mode the camera is in - determines HUD elements */
   ViewfinderMode current_mode;
-
   /** @brief recently captured frame, when waiting to save */
   cv::Mat still_capture;
-
   /** @brief recently captured video, when waiting to save */
-  cv::VideoWriter video_capture;
+  cv::VideoWriter video_record;
+  /** @brief video playback */
+  cv::VideoCapture video_capture;
 
   /** @brief actual camera device */
 #if defined RPI

@@ -36,14 +36,9 @@ Viewfinder::Viewfinder() {
     Glib::signal_timeout().connect(
         sigc::mem_fun(*this, &Viewfinder::on_timeout), FRAMERATE_INTERVAL);
   }
+
   current_mode = ViewfinderMode::STREAM;
   print("Setup finished.");
-  std::stringstream ss;
-  ss << "Frame Width: ";
-  ss << camera.get(cv::CAP_PROP_FRAME_WIDTH);
-  ss << " Frame Height: ";
-  ss << camera.get(cv::CAP_PROP_FRAME_HEIGHT);
-  print(ss.str());
 }
 
 Viewfinder::~Viewfinder() {
@@ -63,28 +58,40 @@ bool Viewfinder::on_timeout() {
 }
 
 bool Viewfinder::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
-	cv::Mat cv_frame, cv_frame1;
+  // frame1 is the raw image frame from source
+  // frame2 is for a color-corrected version
+	cv::Mat frame1, frame2;
 
+  // always grab, else there will be a lag
   camera.grab();
-  if (current_mode == ViewfinderMode::STREAM) {
+
+  // pick the source of the frame based on the mode
+  switch(current_mode) {
+    case ViewfinderMode::STREAM:
+    case ViewfinderMode::VIDEO_CAPTURE_NOW:
+
+    default:
+      
+  }
     if (!camera.isOpened()) 
       error(Exceptions::VF_OPEN_FAIL, "Viewfinder in continuous mode, but camera not opened");
     // if the current mode is continuous, operate as video playback
     camera.retrieve(cv_frame);
-  //} else if (current_mode == ViewfinderMode::VIDEO_CAPTURE) {
-  } else if (current_mode == ViewfinderMode::VIDEO_CAPTURE_NOW) {
-    if (!video_capture.isOpened())
-      error(Exceptions::VF_WRITER_OPEN_FAIL, 
-            "viewfinder recording but no writer opened");
-    video_capture.write(cv_frame);
-    still_capture = cv_frame;
+    if (current_mode == ViewfinderMode::VIDEO_CAPTURE_NOW) {
+      if (!video_capture.isOpened())
+        error(Exceptions::VF_WRITER_OPEN_FAIL, 
+              "viewfinder recording but no writer opened");
+      video_capture.write(cv_frame);
+      still_capture = cv_frame;
+    }
   } else {
     // else show the latest image taken
-    /* TODO better safety checks
-    if (still_capture == NULL)
+    /* TODO: Better safety checks
+    if (!still_capture) {
       error(Exceptions::VF_OPEN_FAIL, 
             "Viewfinder attempting to get a frame from captures, but container is empty");
-            */
+    }
+    // */
     cv_frame = still_capture;
   }
  
@@ -212,7 +219,6 @@ void Viewfinder::set_frame(cv::Mat frame) {
   still_capture = frame;
 }
 
-
 bool Viewfinder::stop_capture() {
   print("Stopping video capture");
   video_capture.release();
@@ -222,14 +228,12 @@ bool Viewfinder::stop_capture() {
 
 void Viewfinder::start_capture(std::string location) {
   print("Starting video capture");
-  //video_capture.open(location, 
-  //video_capture.open("appsrc ! autovideoconvert ! v4l2video1h264enc extra-controls=\"encode,h264_level=10,h264_profile=4,frame_level_rate_control_enable=1,video_bitrate=2000000\" ! h264parse ! rtph264pay config-interval=1 pt=96 ! filesink location=file.avi ",
-  video_capture.open(
-                "appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=test.mkv ", 
-                0,
-                1000.0/FRAMERATE_INTERVAL,
-                cv::Size(camera.get(cv::CAP_PROP_FRAME_WIDTH),
-                         camera.get(cv::CAP_PROP_FRAME_HEIGHT)));
+  print(location.c_str());
+  video_capture.open(location, 
+                     CV_FOURCC('M','J','P','G'),
+                     1000.0/FRAMERATE_INTERVAL,
+                     cv::Size(camera.get(cv::CAP_PROP_FRAME_WIDTH),
+                              camera.get(cv::CAP_PROP_FRAME_HEIGHT)));
   current_mode = ViewfinderMode::VIDEO_CAPTURE_NOW;
   Glib::signal_timeout().connect(
       sigc::mem_fun(*this, &Viewfinder::stop_capture), 30000);

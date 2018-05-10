@@ -33,6 +33,9 @@ Gui::Gui()
   l4_options_HDR(  Gtk::ORIENTATION_VERTICAL,  4),
   save_SC("Save"),
   save_HDR("Save"),
+  save_VID("Save"),
+  save_PAN("Save"),
+  save_IS("Save"),
   adjustment_exposure(Gtk::Adjustment::create(50.0, 1.0, 100.0, 5.0, 10.0, 0.0)),
   adjustment_iso(Gtk::Adjustment::create(50.0, 1.0, 100.0, 5.0, 10.0, 0.0)),
   exposure(adjustment_exposure),
@@ -73,6 +76,8 @@ Gui::Gui()
 
   // add control options for each mode
   l3_stack.add(l4_options_VIDEO, "Video options");
+  l4_options_VIDEO.pack_start(save_VID);
+  save_VID.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
 
   l3_stack.add(l4_options_STILL, "Still Capture options");
   l4_options_STILL.pack_start(save_SC);
@@ -87,6 +92,14 @@ Gui::Gui()
   l3_stack.add(l4_options_HDR, "HDR options");
   l4_options_HDR.pack_start(save_HDR);
   save_HDR.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
+
+  l3_stack.add(l4_options_PANORAMA, "Panorama options");
+  l4_options_PANORAMA.pack_start(save_PAN);
+  save_PAN.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
+
+  l3_stack.add(l4_options_IM_STAB, "Image Stabilization options");
+  l4_options_IM_STAB.pack_start(save_IS);
+  save_IS.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
 
   l3_stack.add(l4_options_GALLERY, "Gallery options");
   l4_options_GALLERY.pack_start(scrolled_window);
@@ -209,10 +222,10 @@ bool Gui::on_capture(GdkEventButton *event) {
         l3_viewfinder.stop_capture();
       } else {
         std::stringstream ss;
-        //ss << "appsrc ! autovideoconvert ! omxh265enc ! matroskamux ! filesink location=";
+        ss << HOME_PATH;
         ss << IMG_SAVE_PATH;
-        //ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        ss << "bruh.mkv";
+        ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        ss << ".avi";
         l3_viewfinder.start_capture(ss.str());
       }
       break;
@@ -281,14 +294,19 @@ void Gui::on_mode_change(CameraMode mode) {
 }
 
 void Gui::on_save() {
-  std::stringstream ss;
-  ss << HOME_PATH;
-  ss << IMG_SAVE_PATH;
-  ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  ss << ".jpg";
-  cv::Mat frame = l3_viewfinder.get_frame();
-  cv::imwrite(ss.str().c_str(), frame);
-  l3_viewfinder.set_mode(ViewfinderMode::STREAM);
+  ViewfinderMode mode = l3_viewfinder.get_mode();
+  if (mode == ViewfinderMode::CAPTURE) {
+    std::stringstream ss;
+    ss << HOME_PATH;
+    ss << IMG_SAVE_PATH;
+    ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    ss << ".jpg";
+    cv::Mat frame = l3_viewfinder.get_frame();
+    cv::imwrite(ss.str().c_str(), frame);
+    l3_viewfinder.set_mode(ViewfinderMode::STREAM);
+  } else if (mode == ViewfinderMode::VIDEO_CAPTURE_NOW) {
+    l3_viewfinder.stop_capture();
+  }
 }
 
 void Gui::on_off() {

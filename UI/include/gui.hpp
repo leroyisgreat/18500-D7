@@ -107,7 +107,8 @@ private:
   Gtk::Box                      l4_options_HDR;
   Gtk::Box                      l4_options_PANORAMA;
   Gtk::Box                      l4_options_GALLERY;
-  Gtk::Button                   save_SC, save_HDR;
+  Gtk::Box                      l4_options_IM_STAB;
+  Gtk::Button                   save_SC, save_HDR, save_VID, save_PAN, save_IS;
   Glib::RefPtr<Gtk::Adjustment> adjustment_exposure, adjustment_iso;
   Gtk::SpinButton               exposure, iso;
   Gtk::Label                    exposure_label, iso_label;

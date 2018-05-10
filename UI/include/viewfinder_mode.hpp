@@ -13,7 +13,7 @@
 enum ViewfinderMode {
   STREAM,
   CAPTURE,
-  VIDEO_CAPTURE_NOW,
+  VIDEO_RECORD,
   VIDEO_CAPTURE
 };
 
