@@ -10,9 +10,9 @@ import string
 def take_photos(n, name):
     os.system("mkdir output")
     for i in range(0,n):
-        os.system("ls -l") 
-        os.system("raspistill -vf -hf -o output/" + str(name) +  "_" + str(i) + ".jpg") # enter raspistill 
-
+        print("capturing image" + str(i)) 
+        os.system("raspistill -q 40 -o output/" + str(name) +  "_" + str(i) + ".jpg") # enter raspistill 
+        
 
 
 
@@ -21,7 +21,7 @@ def take_photos(n, name):
 # in the opencv library 
 
 def panorama():
-    n = 5 # this is a filler value for now 
+    n = 4 # this is a filler value for now 
     name = 'pano'
     take_photos(n,name) 
     os.system("./opencv_stitching --mode panorama output/pano_*.jpg")
