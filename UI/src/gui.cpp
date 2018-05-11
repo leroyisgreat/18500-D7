@@ -8,10 +8,8 @@
 #include <python2.7/Python.h>
 #include "boost/filesystem.hpp"
 
-namespace
-{
-  class IconEntry
-  {
+namespace {
+  class IconEntry {
   public:
     IconEntry()
     {}
@@ -20,17 +18,20 @@ namespace
     : m_filename(filename)
     {}
 
-
     const std::string m_filename;
   };
 }
 
+// PUBLIC METHODS {{{
 Gui::Gui()
-: l1_box(          Gtk::ORIENTATION_VERTICAL,  4),
-  l2_box_top(      Gtk::ORIENTATION_HORIZONTAL,4),
-  l4_options_VIDEO(Gtk::ORIENTATION_VERTICAL,  4),
-  l4_options_STILL(Gtk::ORIENTATION_VERTICAL,  4),
-  l4_options_HDR(  Gtk::ORIENTATION_VERTICAL,  4),
+: l1_box(             Gtk::ORIENTATION_VERTICAL,  4),
+  l2_box_top(         Gtk::ORIENTATION_HORIZONTAL,4),
+  l4_options_VIDEO(   Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_STILL(   Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_HDR(     Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_PANORAMA(Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_GALLERY( Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_IM_STAB( Gtk::ORIENTATION_VERTICAL,  4),
   save_SC("Save"),
   save_HDR("Save"),
   save_VID("Save"),
@@ -66,7 +67,8 @@ Gui::Gui()
   Gui::populate_toolbar();
 
   // add left panel to top l2 box
-  l2_box_top.pack_start(l3_stack, true, true);
+  l2_box_top.pack_start(l3_stack, false, false);
+  l3_stack.set_size_request(200);
 
   // add viewfinder to top l2 box
   l2_box_top.pack_start(l3_viewfinder, true, true);
@@ -135,79 +137,9 @@ Gui::~Gui() {
   // destroy Python environment
   Py_Finalize();
 }
+// }}}
 
-void Gui::populate_toolbar() {
-  // create the photo capture button
-  auto pc_image = new Gtk::Image(
-      HOME_PATH + IMG_RESOURCE_PATH + "shoot.ico");
-  auto pc_button = new Gtk::ToolButton(*pc_image, "shoot");
-  pc_button->set_tooltip_text("Take photo");
-  // link photo capture button to function
-  pc_button->signal_clicked().connect(sigc::bind<CameraMode>(
-      sigc::mem_fun(*this, &Gui::on_mode_change),
-      CameraMode::STILL));
-  l2_toolbar.append(*pc_button);
-
-  // create the photo capture button
-  auto live_image = new Gtk::Image(
-      HOME_PATH + IMG_RESOURCE_PATH + "live.ico");
-  auto live_button = new Gtk::ToolButton(*live_image, "live");
-  live_button->set_tooltip_text("Video Mode");
-  // link photo capture button to change camera mode 
-  live_button->signal_clicked().connect(sigc::bind<CameraMode>(
-      sigc::mem_fun(*this, &Gui::on_mode_change),
-      CameraMode::VIDEO));
-  l2_toolbar.append(*live_button);
-
-  // create the HDR mode button
-  auto hdr_image = new Gtk::Image(
-      HOME_PATH + IMG_RESOURCE_PATH + "hdr.ico");
-  auto hdr_button = new Gtk::ToolButton(*hdr_image, "hdr");
-  hdr_button->set_tooltip_text("Toggle HDR mode");
-  hdr_button->signal_clicked().connect(sigc::bind<CameraMode>(
-      sigc::mem_fun(*this, &Gui::on_mode_change),
-      CameraMode::HDR));
-  l2_toolbar.append(*hdr_button);
-
-  // create the Panorama mode button
-  auto panorama_image = new Gtk::Image(
-      HOME_PATH + IMG_RESOURCE_PATH + "panorama.ico");
-  auto panorama_button = new Gtk::ToolButton(*panorama_image, "panorama");
-  panorama_button->set_tooltip_text("Toggle Panorama mode");
-  panorama_button->signal_clicked().connect(sigc::bind<CameraMode>(
-      sigc::mem_fun(*this, &Gui::on_mode_change),
-      CameraMode::PANORAMA));
-  l2_toolbar.append(*panorama_button);
-
-  // create the Stabilize mode button
-  auto stabilize_image = new Gtk::Image(
-      HOME_PATH + IMG_RESOURCE_PATH + "stabilize.ico");
-  auto stabilize_button = new Gtk::ToolButton(*stabilize_image, "stabilize");
-  stabilize_button->set_tooltip_text("Toggle Image Stabilization mode");
-  stabilize_button->signal_clicked().connect(sigc::bind<CameraMode>(
-      sigc::mem_fun(*this, &Gui::on_mode_change),
-      CameraMode::STABILIZE));
-  l2_toolbar.append(*stabilize_button);
-
-  // create the gallery button
-  auto gallery_image = new Gtk::Image(
-      HOME_PATH + IMG_RESOURCE_PATH + "gallery.ico");
-  auto gallery_button = new Gtk::ToolButton(*gallery_image, "gallery");
-  gallery_button->set_tooltip_text("Toggle Gallery mode");
-  gallery_button->signal_clicked().connect(sigc::bind<CameraMode>(
-      sigc::mem_fun(*this, &Gui::on_mode_change),
-      CameraMode::GALLERY));
-  l2_toolbar.append(*gallery_button);
-
-  // create the OFF button
-  auto off_image = new Gtk::Image(
-      HOME_PATH + IMG_RESOURCE_PATH + "off.ico");
-  auto off_button = new Gtk::ToolButton(*off_image, "off");
-  off_button->set_tooltip_text("Turn camera OFF");
-  off_button->signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_off));
-  l2_toolbar.append(*off_button);
-}
-
+// PRIVATE METHODS {{{
 // SIGNAL HANDLERS {{{
 bool Gui::on_capture(GdkEventButton *event) {
   switch (current_mode) {
@@ -217,16 +149,17 @@ bool Gui::on_capture(GdkEventButton *event) {
       l3_viewfinder.queue_draw();
       break;
     case CameraMode::VIDEO:
-      if (l3_viewfinder.get_mode() 
-          == ViewfinderMode::VIDEO_CAPTURE_NOW) {
-        l3_viewfinder.stop_capture();
+      if (l3_viewfinder.get_mode() == ViewfinderMode::VIDEO_RECORD) {
+        l3_viewfinder.stop_writer();
+        l3_viewfinder.set_mode(ViewfinderMode::STREAM);
       } else {
         std::stringstream ss;
         ss << HOME_PATH;
         ss << IMG_SAVE_PATH;
         ss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         ss << ".avi";
-        l3_viewfinder.start_capture(ss.str());
+        l3_viewfinder.start_writer(ss.str());
+        l3_viewfinder.set_mode(ViewfinderMode::VIDEO_RECORD);
       }
       break;
     case CameraMode::HDR:
@@ -304,8 +237,9 @@ void Gui::on_save() {
     cv::Mat frame = l3_viewfinder.get_frame();
     cv::imwrite(ss.str().c_str(), frame);
     l3_viewfinder.set_mode(ViewfinderMode::STREAM);
-  } else if (mode == ViewfinderMode::VIDEO_CAPTURE_NOW) {
-    l3_viewfinder.stop_capture();
+  } else if (mode == ViewfinderMode::VIDEO_RECORD) {
+    l3_viewfinder.stop_writer();
+    l3_viewfinder.set_mode(ViewfinderMode::VIDEO_CAPTURE);
   }
 }
 
@@ -355,13 +289,14 @@ void Gui::gallery() {
   boost::filesystem::recursive_directory_iterator it(location);
   boost::filesystem::recursive_directory_iterator endit;
 
-  const std::string ext(".jpg");
+  const std::string ext1(".jpg");
+  const std::string ext2(".avi");
 
   std::stringstream ss;
   std::string s;
 	while(it != endit) {
     if(boost::filesystem::is_regular_file(*it) && 
-       it->path().extension() == ext) {
+       it->path().extension() == ext1) {
       s = it->path().string();
       const char* filename = s.c_str();
       ss << filename;
@@ -376,6 +311,78 @@ void Gui::gallery() {
 // }}}
 
 // HELPER FUNCTIONS {{{
+void Gui::populate_toolbar() {
+  // create the photo capture button
+  auto pc_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "shoot.ico");
+  auto pc_button = new Gtk::ToolButton(*pc_image, "shoot");
+  pc_button->set_tooltip_text("Take photo");
+  // link photo capture button to function
+  pc_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::STILL));
+  l2_toolbar.append(*pc_button);
+
+  // create the photo capture button
+  auto live_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "live.ico");
+  auto live_button = new Gtk::ToolButton(*live_image, "live");
+  live_button->set_tooltip_text("Video Mode");
+  // link photo capture button to change camera mode 
+  live_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::VIDEO));
+  l2_toolbar.append(*live_button);
+
+  // create the HDR mode button
+  auto hdr_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "hdr.ico");
+  auto hdr_button = new Gtk::ToolButton(*hdr_image, "hdr");
+  hdr_button->set_tooltip_text("Toggle HDR mode");
+  hdr_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::HDR));
+  l2_toolbar.append(*hdr_button);
+
+  // create the Panorama mode button
+  auto panorama_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "panorama.ico");
+  auto panorama_button = new Gtk::ToolButton(*panorama_image, "panorama");
+  panorama_button->set_tooltip_text("Toggle Panorama mode");
+  panorama_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::PANORAMA));
+  l2_toolbar.append(*panorama_button);
+
+  // create the Stabilize mode button
+  auto stabilize_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "stabilize.ico");
+  auto stabilize_button = new Gtk::ToolButton(*stabilize_image, "stabilize");
+  stabilize_button->set_tooltip_text("Toggle Image Stabilization mode");
+  stabilize_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::STABILIZE));
+  l2_toolbar.append(*stabilize_button);
+
+  // create the gallery button
+  auto gallery_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "gallery.ico");
+  auto gallery_button = new Gtk::ToolButton(*gallery_image, "gallery");
+  gallery_button->set_tooltip_text("Toggle Gallery mode");
+  gallery_button->signal_clicked().connect(sigc::bind<CameraMode>(
+      sigc::mem_fun(*this, &Gui::on_mode_change),
+      CameraMode::GALLERY));
+  l2_toolbar.append(*gallery_button);
+
+  // create the OFF button
+  auto off_image = new Gtk::Image(
+      HOME_PATH + IMG_RESOURCE_PATH + "off.ico");
+  auto off_button = new Gtk::ToolButton(*off_image, "off");
+  off_button->set_tooltip_text("Turn camera OFF");
+  off_button->signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_off));
+  l2_toolbar.append(*off_button);
+}
+
 void Gui::add_entry(const std::string& filename) {
   auto row = *(list_model->append());
   row[m_Columns.m_col_filename] = filename;
@@ -397,4 +404,5 @@ void Gui::add_entry(const std::string& filename) {
     std::cerr << "Glib::FileError: " << ex.what() << std::endl;
   }
 }
+// }}}
 // }}}

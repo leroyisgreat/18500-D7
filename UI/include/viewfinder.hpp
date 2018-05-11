@@ -45,6 +45,15 @@ public:
 		return current_mode;
 	}
 
+  /** @brief accessor to the internal camera - sets the camera properties
+   *
+   * @param propId property to be set
+   * @param value value to which the property will be set
+   */
+  inline void set_property(int propId, double value) {
+      camera.set(propId, value);
+  }
+
   /** @brief getter for the camera device frame
    *
    * @param fresh if true then a fresh capture will be made and given else a
@@ -62,26 +71,18 @@ public:
    */
   void set_frame(cv::Mat frame);
 
-  /** @brief accessor to the internal camera - sets the camera properties
-   *
-   * @param propId property to be set
-   * @param value value to which the property will be set
-   */
-  inline void set_property(int propId, double value) {
-      camera.set(propId, value);
-  }
-
   /**
-   * @brief starts captureing video
+   * @brief starts capturing video the capture automatically ends after 10
+   * seconds; also opens a VideoCapture to the file for playback
    *
    * @param path to save video
    */
-  void start_capture(std::string location);
+  void start_writer(std::string location);
 
   /**
    * @brief stops capturing video
    */
-  bool stop_capture();
+  bool stop_writer();
 
   /** @brief initializes camera device for use */
   void initialize_camera();
@@ -142,6 +143,8 @@ private:
   ViewfinderMode current_mode;
   /** @brief recently captured frame, when waiting to save */
   cv::Mat still_capture;
+  /** @brief location for recently captured video */
+  std::string video_location;
   /** @brief recently captured video, when waiting to save */
   cv::VideoWriter video_record;
   /** @brief video playback */

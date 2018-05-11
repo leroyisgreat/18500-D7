@@ -127,6 +127,9 @@ private:
 
   /** @brief location of all manually saved images */
   const std::string IMG_SAVE_PATH = "/workspace/18500-D7/saves/";
+
+  /** @brief location of a refrence image placeholder */
+  const std::string VID_ICO_PATH = "/workspace/18500-D7/UI/resources/stock_video.png";
 };
 
 #endif // GUI_HPP

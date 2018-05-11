@@ -17,6 +17,8 @@ struct Exceptions {
   static const char *FRAME_EMPTY;
   static const char *PATH_ERROR;
   static const char *VF_WRITER_OPEN_FAIL;
+  static const char *VF_CAPTURE_OPEN_FAIL;
+  static const char *VF_UNKOWN_MODE;
 };
 
 #endif // EXCEPTIONS_HPP
