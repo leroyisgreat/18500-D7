@@ -93,6 +93,9 @@ public:
   /** @brief string to relay more information from GUI to viewfinder */
   std::string hud_info;
 
+  /** @brief location for recently captured video */
+  std::string video_location;
+
 protected:
   /** @brief timeout function called at FRAMERATE_INTERVAL to re-fetch a frame
    * from the camera
@@ -143,8 +146,6 @@ private:
   ViewfinderMode current_mode;
   /** @brief recently captured frame, when waiting to save */
   cv::Mat still_capture;
-  /** @brief location for recently captured video */
-  std::string video_location;
   /** @brief recently captured video, when waiting to save */
   cv::VideoWriter video_record;
   /** @brief video playback */

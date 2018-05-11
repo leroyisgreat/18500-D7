@@ -358,7 +358,7 @@ void Gui::on_file_chooser_is() {
       ss << IMG_SAVE_PATH;
       ss << "is.avi";
       const char *is_app = ss.str().c_str();
-      FILE *file = fopen(hdr_app, "r");
+      FILE *file = fopen(is_app, "r");
 
       PyRun_SimpleFile(file, is_app);
       fclose(file);
@@ -368,24 +368,8 @@ void Gui::on_file_chooser_is() {
       ss << HOME_PATH;
       ss << IMG_SAVE_PATH;
       ss << "is.jpg";
-      cv::Mat image = cv::imread(ss.str().c_str());
-      l3_viewfinder.set_frame(image);
-
-      std::stringstream ss;
-      ss << HOME_PATH;
-      ss << PANO_PATH;
-      ss << "opencv_stitching.app ";
-      ss << "--output ";
-
-      ss << HOME_PATH;
-      ss << IMG_SAVE_PATH;
-      ss << "pano.jpg";
-      print(ss.str().c_str());
-      system(ss.str().c_str());
-
-      cv::Mat image = cv::imread(HOME_PATH + IMG_SAVE_PATH + "pano.jpg");
-      l3_viewfinder.set_frame(image);
-      l3_viewfinder.set_mode(ViewfinderMode::CAPTURE);
+      l3_viewfinder.video_location = ss.str().c_str();
+      l3_viewfinder.set_mode(ViewfinderMode::VIDEO_CAPTURE);
       
       break;
     } case Gtk::RESPONSE_CANCEL: {
