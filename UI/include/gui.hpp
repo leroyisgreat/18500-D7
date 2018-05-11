@@ -49,7 +49,8 @@ private:
   void on_mode_change(CameraMode mode);
   void on_off();
   void on_save();
-  void on_file_chooser();
+  void on_file_chooser_pan();
+  void on_file_chooser_is();
 
   // regular functions
   void populate_toolbar();
@@ -107,10 +108,9 @@ private:
   Gtk::Box                      l4_options_HDR;
   Gtk::Box                      l4_options_PANORAMA;
   Gtk::Box                      l4_options_GALLERY;
-  Gtk::Box                      l4_options_IM_STAB;
+  Gtk::Box                      l4_options_STABILIZE;
   Gtk::Button                   save_SC, save_HDR, save_VID, save_PAN, save_IS;
-  Gtk::Button                   file_chooser_PAN;
-  Gtk::Label                    file_sel_PAN;
+  Gtk::Button                   file_chooser_PAN, file_chooser_IS;
   Glib::RefPtr<Gtk::Adjustment> adjustment_exposure, adjustment_iso;
   Gtk::SpinButton               exposure, iso;
   Gtk::Label                    exposure_label, iso_label;
@@ -132,6 +132,15 @@ private:
 
   /** @brief location of a refrence image placeholder */
   const std::string VID_ICO_PATH = "/workspace/18500-D7/UI/resources/stock_video.png";
+
+  /** @brief location of panorama stitching app */
+  const std::string PANO_PATH = "/workspace/18500-D7/panorama/";
+
+  /** @brief location of hdr app */
+  const std::string HDR_PATH = "/workspace/18500-D7/hdr/";
+
+  /** @brief location of image stabilization app */
+  const std::string IS_PATH = "/workspace/18500-D7/ImageStabilization/";
 };
 
 #endif // GUI_HPP

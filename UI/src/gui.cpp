@@ -24,14 +24,14 @@ namespace {
 
 // PUBLIC METHODS {{{
 Gui::Gui()
-: l1_box(             Gtk::ORIENTATION_VERTICAL,  4),
-  l2_box_top(         Gtk::ORIENTATION_HORIZONTAL,4),
-  l4_options_VIDEO(   Gtk::ORIENTATION_VERTICAL,  4),
-  l4_options_STILL(   Gtk::ORIENTATION_VERTICAL,  4),
-  l4_options_HDR(     Gtk::ORIENTATION_VERTICAL,  4),
-  l4_options_PANORAMA(Gtk::ORIENTATION_VERTICAL,  4),
-  l4_options_GALLERY( Gtk::ORIENTATION_VERTICAL,  4),
-  l4_options_IM_STAB( Gtk::ORIENTATION_VERTICAL,  4),
+: l1_box(              Gtk::ORIENTATION_VERTICAL,  4),
+  l2_box_top(          Gtk::ORIENTATION_HORIZONTAL,4),
+  l4_options_VIDEO(    Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_STILL(    Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_HDR(      Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_PANORAMA( Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_GALLERY(  Gtk::ORIENTATION_VERTICAL,  4),
+  l4_options_STABILIZE(Gtk::ORIENTATION_VERTICAL,  4),
   save_SC("Save"),
   save_HDR("Save"),
   save_VID("Save"),
@@ -100,11 +100,13 @@ Gui::Gui()
   l4_options_PANORAMA.pack_start(save_PAN);
   l4_options_PANORAMA.pack_start(file_chooser_PAN);
   save_PAN.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
-  file_chooser_PAN.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_file_chooser));
+  file_chooser_PAN.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_file_chooser_pan));
 
-  l3_stack.add(l4_options_IM_STAB, "Image Stabilization options");
-  l4_options_IM_STAB.pack_start(save_IS);
+  l3_stack.add(l4_options_STABILIZE, "Image Stabilization options");
+  l4_options_STABILIZE.pack_start(save_IS);
+  l4_options_STABILIZE.pack_start(file_chooser_IS);
   save_IS.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
+  file_chooser_PAN.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_file_chooser_is));
 
   l3_stack.add(l4_options_GALLERY, "Gallery options");
   l4_options_GALLERY.pack_start(scrolled_window);
@@ -216,6 +218,9 @@ void Gui::on_mode_change(CameraMode mode) {
     case CameraMode::PANORAMA:
       l3_stack.set_visible_child(l4_options_PANORAMA);
       break;
+    case CameraMode::STABILIZE:
+      l3_stack.set_visible_child(l4_options_STABILIZE);
+      break;
     case CameraMode::GALLERY:
       l3_stack.set_visible_child(l4_options_GALLERY);
       l3_viewfinder.get_frame(true);
@@ -248,7 +253,7 @@ void Gui::on_off() {
   Gtk::Main::quit();
 }
 
-void Gui::on_file_chooser() {
+void Gui::on_file_chooser_pan() {
   Gtk::FileChooserDialog dialog("Please choose a file",
           Gtk::FILE_CHOOSER_ACTION_OPEN);
   dialog.set_select_multiple(true);
@@ -283,13 +288,105 @@ void Gui::on_file_chooser() {
       std::vector<std::string> filenames = dialog.get_filenames();
       std::stringstream ss;
       ss << HOME_PATH;
-      ss << "/workspace/18500-D7/panorama/opencv_stitching.app ";
+      ss << PANO_PATH;
+      ss << "opencv_stitching.app ";
       for (auto it = filenames.begin(); it != filenames.end(); ++it) {
         ss << *it;
         ss << " ";
       }
+      ss << "--output ";
+      ss << HOME_PATH;
+      ss << IMG_SAVE_PATH;
+      ss << "pano.jpg";
       print(ss.str().c_str());
       system(ss.str().c_str());
+
+      cv::Mat image = cv::imread(HOME_PATH + IMG_SAVE_PATH + "pano.jpg");
+      l3_viewfinder.set_frame(image);
+      l3_viewfinder.set_mode(ViewfinderMode::CAPTURE);
+      
+      break;
+    } case Gtk::RESPONSE_CANCEL: {
+      print("Cancel clicked.");
+      break;
+    } default:
+      print("Unexpected button clicked.");
+      break;
+  }
+}
+
+void Gui::on_file_chooser_is() {
+  Gtk::FileChooserDialog dialog("Please choose a file",
+          Gtk::FILE_CHOOSER_ACTION_OPEN);
+  dialog.set_current_folder(HOME_PATH + IMG_SAVE_PATH);
+  dialog.set_transient_for(*this);
+
+  //Add response buttons the the dialog:
+  dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dialog.add_button("_Open", Gtk::RESPONSE_OK);
+
+  //Add filters, so that only certain file types can be selected:
+  auto filter_vid = Gtk::FileFilter::create();
+  filter_vid->set_name("video");
+  filter_vid->add_mime_type("video/x-msvideo");
+  dialog.add_filter(filter_vid);
+
+  auto filter_any = Gtk::FileFilter::create();
+  filter_any->set_name("Any files");
+  filter_any->add_pattern("*");
+  dialog.add_filter(filter_any);
+
+  //Show the dialog and wait for a user response:
+  int result = dialog.run();
+
+  //Handle the response:
+  switch(result) {
+    case Gtk::RESPONSE_OK: {
+      print("Open clicked.");
+
+      //Notice that this is a std::string, not a Glib::ustring.
+      std::string filename = dialog.get_filename();
+
+      // run the script
+      std::stringstream ss;
+      ss << HOME_PATH;
+      ss << IS_PATH;
+      ss << "python_video_stab.py --video ";
+      ss << filename;
+      ss << " --output ";
+      ss << HOME_PATH;
+      ss << IMG_SAVE_PATH;
+      ss << "is.avi";
+      const char *is_app = ss.str().c_str();
+      FILE *file = fopen(hdr_app, "r");
+
+      PyRun_SimpleFile(file, is_app);
+      fclose(file);
+
+      // get the result back and dsiplay
+      ss.clear();
+      ss << HOME_PATH;
+      ss << IMG_SAVE_PATH;
+      ss << "is.jpg";
+      cv::Mat image = cv::imread(ss.str().c_str());
+      l3_viewfinder.set_frame(image);
+
+      std::stringstream ss;
+      ss << HOME_PATH;
+      ss << PANO_PATH;
+      ss << "opencv_stitching.app ";
+      ss << "--output ";
+
+      ss << HOME_PATH;
+      ss << IMG_SAVE_PATH;
+      ss << "pano.jpg";
+      print(ss.str().c_str());
+      system(ss.str().c_str());
+
+      cv::Mat image = cv::imread(HOME_PATH + IMG_SAVE_PATH + "pano.jpg");
+      l3_viewfinder.set_frame(image);
+      l3_viewfinder.set_mode(ViewfinderMode::CAPTURE);
+      
       break;
     } case Gtk::RESPONSE_CANCEL: {
       print("Cancel clicked.");
@@ -311,14 +408,30 @@ void Gui::hdr() {
   l3_viewfinder.uninitialize_camera();
 
   // run the script
-  FILE* file = fopen("/home/pi/workspace/18500-D7/hdr/runhdrpi.py", "r");
+  std::stringstream ss;
+  ss << HOME_PATH;
+  ss << HDR_PATH;
+  ss << "runhdrpi.py";
+  const char *hdr_app = ss.str().c_str();
+  FILE *file = fopen(hdr_app, "r");
+
+  ss.clear();
+  ss << "os.chdir('";
+  ss << HOME_PATH;
+  ss << HDR_PATH;
+  ss << "')";
+  const char *py_str;
   // change working directory so calls and file operations work properly
-  PyRun_SimpleString("os.chdir('/home/pi/workspace/18500-D7/hdr/')");
-  PyRun_SimpleFile(file, "/home/pi/workspace/18500-D7/hdr/runhdrpi.py");
+  PyRun_SimpleString(py_str);
+  PyRun_SimpleFile(file, hdr_app);
   fclose(file);
 
   // get the result back and dsiplay
-  cv::Mat image = cv::imread("/home/pi/workspace/18500-D7/hdr/output.jpg");
+  ss.clear();
+  ss << HOME_PATH;
+  ss << HDR_PATH;
+  ss << "output.jpg";
+  cv::Mat image = cv::imread(ss.str().c_str());
   l3_viewfinder.set_frame(image);
 
   // re-take camera
