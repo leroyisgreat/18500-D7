@@ -49,12 +49,12 @@ private:
   void on_mode_change(CameraMode mode);
   void on_off();
   void on_save();
+  void on_file_chooser();
 
   // regular functions
   void populate_toolbar();
   void set_mode(CameraMode mode);
   void hdr();
-  void panorama();
   void gallery();
 
   // helper functions
@@ -109,6 +109,8 @@ private:
   Gtk::Box                      l4_options_GALLERY;
   Gtk::Box                      l4_options_IM_STAB;
   Gtk::Button                   save_SC, save_HDR, save_VID, save_PAN, save_IS;
+  Gtk::Button                   file_chooser_PAN;
+  Gtk::Label                    file_sel_PAN;
   Glib::RefPtr<Gtk::Adjustment> adjustment_exposure, adjustment_iso;
   Gtk::SpinButton               exposure, iso;
   Gtk::Label                    exposure_label, iso_label;

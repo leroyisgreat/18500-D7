@@ -37,6 +37,7 @@ Gui::Gui()
   save_VID("Save"),
   save_PAN("Save"),
   save_IS("Save"),
+  file_chooser_PAN("Select File(s)"),
   adjustment_exposure(Gtk::Adjustment::create(50.0, 1.0, 100.0, 5.0, 10.0, 0.0)),
   adjustment_iso(Gtk::Adjustment::create(50.0, 1.0, 100.0, 5.0, 10.0, 0.0)),
   exposure(adjustment_exposure),
@@ -97,7 +98,9 @@ Gui::Gui()
 
   l3_stack.add(l4_options_PANORAMA, "Panorama options");
   l4_options_PANORAMA.pack_start(save_PAN);
+  l4_options_PANORAMA.pack_start(file_chooser_PAN);
   save_PAN.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
+  file_chooser_PAN.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_file_chooser));
 
   l3_stack.add(l4_options_IM_STAB, "Image Stabilization options");
   l4_options_IM_STAB.pack_start(save_IS);
@@ -166,7 +169,6 @@ bool Gui::on_capture(GdkEventButton *event) {
       hdr();
       break;
     case CameraMode::PANORAMA:
-      panorama();
       break;
     case CameraMode::GALLERY:
       gallery();
@@ -213,7 +215,6 @@ void Gui::on_mode_change(CameraMode mode) {
       break;
     case CameraMode::PANORAMA:
       l3_stack.set_visible_child(l4_options_PANORAMA);
-      panorama();
       break;
     case CameraMode::GALLERY:
       l3_stack.set_visible_child(l4_options_GALLERY);
@@ -246,6 +247,58 @@ void Gui::on_save() {
 void Gui::on_off() {
   Gtk::Main::quit();
 }
+
+void Gui::on_file_chooser() {
+  Gtk::FileChooserDialog dialog("Please choose a file",
+          Gtk::FILE_CHOOSER_ACTION_OPEN);
+  dialog.set_select_multiple(true);
+  dialog.set_current_folder(HOME_PATH + IMG_SAVE_PATH);
+  dialog.set_transient_for(*this);
+
+  //Add response buttons the the dialog:
+  dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dialog.add_button("_Open", Gtk::RESPONSE_OK);
+
+  //Add filters, so that only certain file types can be selected:
+  auto filter_images = Gtk::FileFilter::create();
+  filter_images->set_name("images");
+  filter_images->add_mime_type("image/jpeg");
+  filter_images->add_mime_type("image/png");
+  dialog.add_filter(filter_images);
+
+  auto filter_any = Gtk::FileFilter::create();
+  filter_any->set_name("Any files");
+  filter_any->add_pattern("*");
+  dialog.add_filter(filter_any);
+
+  //Show the dialog and wait for a user response:
+  int result = dialog.run();
+
+  //Handle the response:
+  switch(result) {
+    case Gtk::RESPONSE_OK: {
+      print("Open clicked.");
+
+      //Notice that this is a std::string, not a Glib::ustring.
+      std::vector<std::string> filenames = dialog.get_filenames();
+      std::stringstream ss;
+      ss << HOME_PATH;
+      ss << "/workspace/18500-D7/panorama/opencv_stitching.app ";
+      for (auto it = filenames.begin(); it != filenames.end(); ++it) {
+        ss << *it;
+        ss << " ";
+      }
+      print(ss.str().c_str());
+      system(ss.str().c_str());
+      break;
+    } case Gtk::RESPONSE_CANCEL: {
+      print("Cancel clicked.");
+      break;
+    } default:
+      print("Unexpected button clicked.");
+      break;
+  }
+}
 // }}}
 
 // MODE FUNCTIONS {{{
@@ -270,10 +323,6 @@ void Gui::hdr() {
 
   // re-take camera
   l3_viewfinder.initialize_camera();
-}
-
-void Gui::panorama() {
-  return;
 }
 
 void Gui::gallery() {
