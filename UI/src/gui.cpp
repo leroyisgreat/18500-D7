@@ -433,6 +433,7 @@ void Gui::hdr() {
   ss << "output.jpg";
   cv::Mat image = cv::imread(ss.str().c_str());
   l3_viewfinder.set_frame(image);
+  l3_viewfinder.set_mode(ViewfinderMode::CAPTURE);
 
   // re-take camera
   l3_viewfinder.initialize_camera();

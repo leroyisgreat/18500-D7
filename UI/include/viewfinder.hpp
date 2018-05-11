@@ -13,7 +13,7 @@
 #ifndef VIEWFINDER_HPP
 #define VIEWFINDER_HPP
 
-#define V4L2
+#define RPI
 
 #include "viewfinder_mode.hpp"
 #include <gtkmm/drawingarea.h>
