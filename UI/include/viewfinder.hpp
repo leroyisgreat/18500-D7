@@ -13,7 +13,7 @@
 #ifndef VIEWFINDER_HPP
 #define VIEWFINDER_HPP
 
-#define RPI
+#define V4L2
 
 #include "viewfinder_mode.hpp"
 #include <gtkmm/drawingarea.h>
@@ -90,11 +90,10 @@ public:
   /** @brief uninitializes camera device fo other programs to use it */
   void uninitialize_camera();
 
+  void set_video(std::string filename);
+
   /** @brief string to relay more information from GUI to viewfinder */
   std::string hud_info;
-
-  /** @brief location for recently captured video */
-  std::string video_location;
 
 protected:
   /** @brief timeout function called at FRAMERATE_INTERVAL to re-fetch a frame
@@ -150,6 +149,9 @@ private:
   cv::VideoWriter video_record;
   /** @brief video playback */
   cv::VideoCapture video_capture;
+  /** @brief location for recently captured video */
+  std::string video_location;
+
 
   /** @brief actual camera device */
 #if defined RPI

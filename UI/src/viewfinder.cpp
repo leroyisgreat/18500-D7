@@ -110,6 +110,11 @@ void Viewfinder::uninitialize_camera() {
   print("Uninitializing Camera");
   camera.release();
 }
+
+void Viewfinder::set_video(std::string filename) {
+  video_location = filename;
+  video_capture.open(filename);
+}
 // }}}
 
 // PRIVATE METHODS {{{

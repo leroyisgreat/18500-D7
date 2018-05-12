@@ -45,21 +45,23 @@ private:
   // Signal handlers:
   bool on_capture(GdkEventButton *event);
   void on_exposure_change();
+  void on_file_chooser_is();
+  void on_file_chooser_pan();
   void on_iso_change();
   void on_mode_change(CameraMode mode);
   void on_off();
   void on_save();
-  void on_file_chooser_pan();
-  void on_file_chooser_is();
+  void on_selection_changed();
 
-  // regular functions
-  void populate_toolbar();
+  // mode functions
   void set_mode(CameraMode mode);
   void hdr();
   void gallery();
 
   // helper functions
-  void add_entry(const std::string& filename);
+  void populate_toolbar();
+  void add_entry(const std::string& filename, bool is_vid = false);
+  Gtk::FileChooserDialog create_dialog(Glib::RefPtr<Gtk::FileFilter> filter);
 
   /** 
    * @brief simple function to preface prints with more information
@@ -87,36 +89,39 @@ private:
   class ModelColumns : public Gtk::TreeModel::ColumnRecord {
     public:
       ModelColumns() {
-        add(m_col_filename);
-        add(m_col_pixbuf);
+        add(col_filename);
+        add(col_pixbuf);
+        add(col_is_vid);
       }
 
-      Gtk::TreeModelColumn<std::string> m_col_filename;
-      Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf> > m_col_pixbuf;
+      Gtk::TreeModelColumn<std::string> col_filename;
+      Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> col_pixbuf;
+      Gtk::TreeModelColumn<bool> col_is_vid;
   };
 
-  ModelColumns m_Columns;
+  ModelColumns model_columns;
 
   // Child widgets:
-  Gtk::Box                      l1_box;
-  Gtk::Box                      l2_box_top;
-  Gtk::Toolbar                  l2_toolbar;
-  Gtk::Stack                    l3_stack;
-  Viewfinder                    l3_viewfinder;
-  Gtk::Box                      l4_options_VIDEO;
-  Gtk::Box                      l4_options_STILL;
-  Gtk::Box                      l4_options_HDR;
-  Gtk::Box                      l4_options_PANORAMA;
-  Gtk::Box                      l4_options_GALLERY;
-  Gtk::Box                      l4_options_STABILIZE;
-  Gtk::Button                   save_SC, save_HDR, save_VID, save_PAN, save_IS;
-  Gtk::Button                   file_chooser_PAN, file_chooser_IS;
-  Glib::RefPtr<Gtk::Adjustment> adjustment_exposure, adjustment_iso;
-  Gtk::SpinButton               exposure, iso;
-  Gtk::Label                    exposure_label, iso_label;
-  Gtk::ScrolledWindow           scrolled_window;
-  Gtk::IconView                 icon_view;
-  Glib::RefPtr<Gtk::ListStore>  list_model;
+  Gtk::Box                         l1_box;
+  Gtk::Box                         l2_box_top;
+  Gtk::Toolbar                     l2_toolbar;
+  Gtk::Stack                       l3_stack;
+  Viewfinder                       l3_viewfinder;
+  Gtk::Box                         l4_options_VIDEO;
+  Gtk::Box                         l4_options_STILL;
+  Gtk::Box                         l4_options_HDR;
+  Gtk::Box                         l4_options_PANORAMA;
+  Gtk::Box                         l4_options_GALLERY;
+  Gtk::Box                         l4_options_STABILIZE;
+  Gtk::Button                      save_SC, save_HDR, save_VID;
+  Gtk::Button                      file_chooser_PAN, file_chooser_IS;
+  Glib::RefPtr<Gtk::Adjustment>    adjustment_exposure, adjustment_iso;
+  Gtk::SpinButton                  exposure, iso;
+  Gtk::Label                       exposure_label, iso_label;
+  Gtk::ScrolledWindow              scrolled_window;
+  Gtk::TreeView                    icon_view;
+  Glib::RefPtr<Gtk::ListStore>     list_model;
+  Glib::RefPtr<Gtk::TreeSelection> icon_view_selection;
 
 	/** @brief camera Mode information */
 	CameraMode current_mode;

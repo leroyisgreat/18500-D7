@@ -8,20 +8,6 @@
 #include <python2.7/Python.h>
 #include "boost/filesystem.hpp"
 
-namespace {
-  class IconEntry {
-  public:
-    IconEntry()
-    {}
-
-    IconEntry(const std::string& filename)
-    : m_filename(filename)
-    {}
-
-    const std::string m_filename;
-  };
-}
-
 // PUBLIC METHODS {{{
 Gui::Gui()
 : l1_box(              Gtk::ORIENTATION_VERTICAL,  4),
@@ -35,9 +21,8 @@ Gui::Gui()
   save_SC("Save"),
   save_HDR("Save"),
   save_VID("Save"),
-  save_PAN("Save"),
-  save_IS("Save"),
-  file_chooser_PAN("Select File(s)"),
+  file_chooser_PAN("Select Image(s)"),
+  file_chooser_IS("Select Video"),
   adjustment_exposure(Gtk::Adjustment::create(50.0, 1.0, 100.0, 5.0, 10.0, 0.0)),
   adjustment_iso(Gtk::Adjustment::create(50.0, 1.0, 100.0, 5.0, 10.0, 0.0)),
   exposure(adjustment_exposure),
@@ -51,6 +36,7 @@ Gui::Gui()
   set_border_width(10);
   set_default_size(800,600);
 
+  // get the current HOME path, to access files
   const char *home = std::getenv("HOME");
   if (home == NULL) {
     error(Exceptions::PATH_ERROR, "Error getting user home path");
@@ -89,7 +75,8 @@ Gui::Gui()
   l4_options_STILL.pack_start(iso_label);
   l4_options_STILL.pack_start(iso);
   save_SC.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
-  exposure.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_exposure_change));
+  exposure.signal_changed().connect(sigc::mem_fun(*this,
+        &Gui::on_exposure_change));
   iso.signal_changed().connect(sigc::mem_fun(*this, &Gui::on_iso_change));
 
   l3_stack.add(l4_options_HDR, "HDR options");
@@ -97,27 +84,33 @@ Gui::Gui()
   save_HDR.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
 
   l3_stack.add(l4_options_PANORAMA, "Panorama options");
-  l4_options_PANORAMA.pack_start(save_PAN);
   l4_options_PANORAMA.pack_start(file_chooser_PAN);
-  save_PAN.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
-  file_chooser_PAN.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_file_chooser_pan));
+  file_chooser_PAN.signal_clicked().connect(sigc::mem_fun(*this,
+        &Gui::on_file_chooser_pan));
 
   l3_stack.add(l4_options_STABILIZE, "Image Stabilization options");
-  l4_options_STABILIZE.pack_start(save_IS);
   l4_options_STABILIZE.pack_start(file_chooser_IS);
-  save_IS.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_save));
-  file_chooser_PAN.signal_clicked().connect(sigc::mem_fun(*this, &Gui::on_file_chooser_is));
+  file_chooser_IS.signal_clicked().connect(sigc::mem_fun(*this,
+        &Gui::on_file_chooser_is));
 
+  // GALLERY doesn't get options, just a scrolling window
   l3_stack.add(l4_options_GALLERY, "Gallery options");
   l4_options_GALLERY.pack_start(scrolled_window);
   scrolled_window.add(icon_view);
 
-	list_model = Gtk::ListStore::create(m_Columns);
-	list_model->set_sort_column( m_Columns.m_col_filename, Gtk::SortType::SORT_ASCENDING);
-
+  // create the gallery thumbnail viewer
+	list_model = Gtk::ListStore::create(model_columns);
+  list_model->set_sort_column(model_columns.col_filename,
+      Gtk::SortType::SORT_ASCENDING);
   icon_view.set_model(list_model);
-	icon_view.set_pixbuf_column(m_Columns.m_col_pixbuf);
-  icon_view.set_columns(1);
+	//icon_view.set_pixbuf_column(model_columns.col_pixbuf);
+  icon_view.append_column("Image", model_columns.col_pixbuf);
+  //icon_view.set_columns(1);
+
+  // connect the thumbnail viewer with a signal handler for selections
+  icon_view_selection = icon_view.get_selection();
+  icon_view_selection->signal_changed().connect(sigc::mem_fun(*this,
+        &Gui::on_selection_changed));
   // }}}
 
   // set visibility to all children to be seen
@@ -168,12 +161,10 @@ bool Gui::on_capture(GdkEventButton *event) {
       }
       break;
     case CameraMode::HDR:
-      hdr();
-      break;
     case CameraMode::PANORAMA:
-      break;
+    case CameraMode::STABILIZE:
     case CameraMode::GALLERY:
-      gallery();
+      // clicking the viewfinder should do nothing for these modes
       break;
     default:
       error(Exceptions::GUI_UNKOWN_MODE, 
@@ -254,27 +245,12 @@ void Gui::on_off() {
 }
 
 void Gui::on_file_chooser_pan() {
-  Gtk::FileChooserDialog dialog("Please choose a file",
-          Gtk::FILE_CHOOSER_ACTION_OPEN);
-  dialog.set_select_multiple(true);
-  dialog.set_current_folder(HOME_PATH + IMG_SAVE_PATH);
-  dialog.set_transient_for(*this);
-
-  //Add response buttons the the dialog:
-  dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
-  dialog.add_button("_Open", Gtk::RESPONSE_OK);
-
-  //Add filters, so that only certain file types can be selected:
   auto filter_images = Gtk::FileFilter::create();
   filter_images->set_name("images");
   filter_images->add_mime_type("image/jpeg");
-  filter_images->add_mime_type("image/png");
-  dialog.add_filter(filter_images);
 
-  auto filter_any = Gtk::FileFilter::create();
-  filter_any->set_name("Any files");
-  filter_any->add_pattern("*");
-  dialog.add_filter(filter_any);
+  auto dialog = create_dialog(filter_images);
+  dialog.set_select_multiple(true);
 
   //Show the dialog and wait for a user response:
   int result = dialog.run();
@@ -316,25 +292,11 @@ void Gui::on_file_chooser_pan() {
 }
 
 void Gui::on_file_chooser_is() {
-  Gtk::FileChooserDialog dialog("Please choose a file",
-          Gtk::FILE_CHOOSER_ACTION_OPEN);
-  dialog.set_current_folder(HOME_PATH + IMG_SAVE_PATH);
-  dialog.set_transient_for(*this);
+  auto filter_video = Gtk::FileFilter::create();
+  filter_video->set_name("video");
+  filter_video->add_mime_type("video/x-msvideo");
 
-  //Add response buttons the the dialog:
-  dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
-  dialog.add_button("_Open", Gtk::RESPONSE_OK);
-
-  //Add filters, so that only certain file types can be selected:
-  auto filter_vid = Gtk::FileFilter::create();
-  filter_vid->set_name("video");
-  filter_vid->add_mime_type("video/x-msvideo");
-  dialog.add_filter(filter_vid);
-
-  auto filter_any = Gtk::FileFilter::create();
-  filter_any->set_name("Any files");
-  filter_any->add_pattern("*");
-  dialog.add_filter(filter_any);
+  auto dialog = create_dialog(filter_video);
 
   //Show the dialog and wait for a user response:
   int result = dialog.run();
@@ -344,31 +306,27 @@ void Gui::on_file_chooser_is() {
     case Gtk::RESPONSE_OK: {
       print("Open clicked.");
 
-      //Notice that this is a std::string, not a Glib::ustring.
       std::string filename = dialog.get_filename();
 
       // run the script
       std::stringstream ss;
-      ss << HOME_PATH;
-      ss << IS_PATH;
-      ss << "python_video_stab.py --video ";
+      ss << "python ";
+      ss << "/home/leroyce/workspace/18500-D7/ImageStabilization/video_stabilization.py";
+      ss << " -v ";
       ss << filename;
-      ss << " --output ";
+      ss << " -o ";
       ss << HOME_PATH;
       ss << IMG_SAVE_PATH;
-      ss << "is.avi";
-      const char *is_app = ss.str().c_str();
-      FILE *file = fopen(is_app, "r");
-
-      PyRun_SimpleFile(file, is_app);
-      fclose(file);
+      //PyRun_SimpleFile(file, ss.str().c_str());
+      //fclose(file);
+      system(ss.str().c_str());
 
       // get the result back and dsiplay
-      ss.clear();
-      ss << HOME_PATH;
-      ss << IMG_SAVE_PATH;
-      ss << "is.jpg";
-      l3_viewfinder.video_location = ss.str().c_str();
+      std::stringstream ss1;
+      ss1 << HOME_PATH;
+      ss1 << IMG_SAVE_PATH;
+      ss1 << "stabilized_output.avi";
+      l3_viewfinder.set_video(ss1.str());
       l3_viewfinder.set_mode(ViewfinderMode::VIDEO_CAPTURE);
       
       break;
@@ -378,6 +336,24 @@ void Gui::on_file_chooser_is() {
     } default:
       print("Unexpected button clicked.");
       break;
+  }
+}
+
+void Gui::on_selection_changed() {
+  auto selection = icon_view.get_selection();
+  Gtk::TreeModel::iterator iter = selection->get_selected();
+  if (iter) {
+    // if anything is selected, set the viewfinder to it
+    Gtk::TreeModel::Row row = *iter;
+    std::string f = row[model_columns.col_filename];
+    if (row[model_columns.col_is_vid]) {
+      l3_viewfinder.set_video(f);
+      l3_viewfinder.set_mode(ViewfinderMode::VIDEO_CAPTURE);
+    } else {
+      cv::Mat frame = cv::imread(f);
+      l3_viewfinder.set_frame(frame);
+      l3_viewfinder.set_mode(ViewfinderMode::CAPTURE);
+    }
   }
 }
 // }}}
@@ -442,13 +418,16 @@ void Gui::gallery() {
   std::stringstream ss;
   std::string s;
 	while(it != endit) {
-    if(boost::filesystem::is_regular_file(*it) && 
-       it->path().extension() == ext1) {
+    if(boost::filesystem::is_regular_file(*it)) {
       s = it->path().string();
       const char* filename = s.c_str();
       ss << filename;
       ss << " ";
-      add_entry(filename);
+      if (it->path().extension() == ext1) {
+        add_entry(filename);
+      } else if (it->path().extension() == ext2) {
+        add_entry(filename, true);
+      }
     }
     ++it;
   }
@@ -530,26 +509,53 @@ void Gui::populate_toolbar() {
   l2_toolbar.append(*off_button);
 }
 
-void Gui::add_entry(const std::string& filename) {
+void Gui::add_entry(const std::string& filename, bool is_vid) {
   auto row = *(list_model->append());
-  row[m_Columns.m_col_filename] = filename;
+  row[model_columns.col_filename] = filename;
+  row[model_columns.col_is_vid] = is_vid;
 
-  try
-  {
-    auto p = Gdk::Pixbuf::create_from_file(filename);
-    int w = p->get_width();
-    int h = p->get_height();
-    double scale = 100.0 / w;
-    row[m_Columns.m_col_pixbuf] = p->scale_simple(w*scale,h*scale,Gdk::INTERP_BILINEAR);
-  }
-  catch (const Gdk::PixbufError& ex)
-  {
+  Glib::RefPtr<Gdk::Pixbuf> buf;
+
+  try {
+    if (is_vid) {
+      buf = Gdk::Pixbuf::create_from_file(
+          HOME_PATH + IMG_RESOURCE_PATH + "stock_video.png");
+    } else {
+      buf = Gdk::Pixbuf::create_from_file(filename);
+    }
+  } catch (const Gdk::PixbufError& ex) {
     std::cerr << "Gdk::PixbufError: " << ex.what() << std::endl;
-  }
-  catch (const Glib::FileError& ex)
-  {
+  } catch (const Glib::FileError& ex) {
     std::cerr << "Glib::FileError: " << ex.what() << std::endl;
   }
+
+  int w = buf->get_width();
+  int h = buf->get_height();
+  double scale = 180.0 / w;
+  row[model_columns.col_pixbuf] =
+    buf->scale_simple(w*scale,h*scale,Gdk::INTERP_BILINEAR);
+}
+
+Gtk::FileChooserDialog Gui::create_dialog(
+    Glib::RefPtr<Gtk::FileFilter> filter) {
+  Gtk::FileChooserDialog dialog("Please choose a file",
+          Gtk::FILE_CHOOSER_ACTION_OPEN);
+  dialog.set_current_folder(HOME_PATH + IMG_SAVE_PATH);
+  dialog.set_transient_for(*this);
+
+  //Add response buttons the the dialog:
+  dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dialog.add_button("_Open", Gtk::RESPONSE_OK);
+
+  //Add filters, so that only certain file types can be selected:
+  dialog.add_filter(filter);
+
+  auto filter_any = Gtk::FileFilter::create();
+  filter_any->set_name("Any files");
+  filter_any->add_pattern("*");
+  dialog.add_filter(filter_any);
+
+  return dialog;
 }
 // }}}
 // }}}
